@@ -222,13 +222,21 @@ input[aria-invalid="true"] { box-shadow: 0 3px 0 0 var(--lick-red); }
 .time-chips { margin-top: 14px; }
 
 /* Contact */
-.email-reveal {
-  background: none; border: 0; font-weight: 700; font-size: 14.5px;
-  text-decoration: underline; text-underline-offset: 3px; margin-top: 12px;
-  padding: 10px 4px; min-height: 44px;
+.email-wrap { margin-top: 14px; }
+
+/* Notes */
+textarea {
+  width: 100%;
+  border: 2px solid var(--spot-black);
+  border-radius: var(--radius-input);
+  background: var(--white);
+  font-family: inherit; font-size: 16px; font-weight: 400;
+  color: var(--spot-black);
+  padding: 12px 14px;
+  min-height: 96px;
+  resize: vertical;
 }
-.email-wrap { margin-top: 12px; display: none; }
-.email-wrap.show { display: block; }
+textarea::placeholder { color: rgba(0,0,0,.62); }
 
 /* Submit */
 .consent { font-size: 13px; color: rgba(0,0,0,.72); margin: 4px 0 12px; text-align: center; }
@@ -488,8 +496,7 @@ footer.site .fine { font-size: 12.5px; color: var(--spot-black); margin-top: 10p
           <input type="tel" id="phone" name="phone" inputmode="tel" autocomplete="tel" placeholder="(555) 000-0000">
         </div>
         <p class="error" id="phoneErr" aria-live="polite" data-msg="We need a real number so your concierge can text you back."></p>
-        <button type="button" class="email-reveal" id="emailReveal">Want email updates too? Add your email.</button>
-        <div class="email-wrap" id="emailWrap">
+        <div class="email-wrap">
           <label class="f-label" for="email">Email (optional)</label>
           <div class="input-wrap" style="max-width:340px">
             <span class="lead-icon"><svg aria-hidden="true"  viewBox="0 0 134 134" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -509,6 +516,13 @@ footer.site .fine { font-size: 12.5px; color: var(--spot-black); margin-top: 10p
           </div>
           <p class="error" id="emailErr" aria-live="polite" data-msg="That email doesn't look right. Fix it or clear it."></p>
         </div>
+      </fieldset>
+
+      <!-- Notes (optional, unnumbered) -->
+      <fieldset>
+        <label class="q-label" for="notes">Anything else your concierge should know?</label>
+        <p class="helper">Optional. Quirks, routines, anything that helps us match your pet.</p>
+        <textarea id="notes" name="notes" maxlength="500" placeholder="Max the corgi hates skateboards. Morning walks only."></textarea>
       </fieldset>
 
       <p class="consent">By submitting, you agree Yourgi may text you about this request. Message and data rates may apply.</p>
@@ -697,12 +711,6 @@ $("phone").addEventListener("input", () => {
 
 $("email").addEventListener("input", () => clearError("email", "emailErr"));
 
-$("emailReveal").addEventListener("click", () => {
-  $("emailWrap").classList.add("show");
-  $("emailReveal").style.display = "none";
-  $("email").focus();
-});
-
 /* ============ Validation ============ */
 function validate() {
   let firstBad = null;
@@ -748,6 +756,7 @@ function buildRequest() {
       ? { [range[0].toLowerCase().replace(" ", "_")]: $("date1").value, [range[1].toLowerCase().replace(" ", "_")]: $("date2").value }
       : { date: $("date1").value },
     timeWindow: tw ? tw.value : "Flexible",
+    notes: $("notes").value.trim().slice(0, 500) || null,
     contact: { phone: $("phone").value, email: email || null, channel: "Send Blue (text)" },
     match: { status: "pending_lookup", key: "phone", note: "Look up phone (and email) against pet parent data before texting" },
     source: "pro-request-form-prototype"
@@ -780,6 +789,7 @@ function buildTeamsPayload(req) {
           { type: "TextBlock", text: "NEW PRO SERVICE REQUEST", weight: "Bolder", size: "Medium" },
           { type: "TextBlock", text: req.service + " in " + req.zip + " - respond via Send Blue", isSubtle: true, spacing: "None", wrap: true },
           { type: "FactSet", facts: facts },
+          ...(req.notes ? [{ type: "TextBlock", text: "Notes from the pet parent: " + req.notes, wrap: true }] : []),
           { type: "TextBlock", text: "Submitted " + req.submittedAt + " via yourgi.com request form", isSubtle: true, size: "Small", wrap: true }
         ]
       }

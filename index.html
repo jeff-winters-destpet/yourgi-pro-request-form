@@ -560,8 +560,20 @@ function safeWebhook(raw) {
     return (u.protocol === "https:" && okHost) ? raw : "";
   } catch { return ""; }
 }
+/* Accept ?webhook= in encoded OR raw form. A raw paste contains & and ?
+   of its own, so grab everything after "webhook=" instead of letting
+   URLSearchParams split it, and only decode when it arrived encoded. */
+function webhookFromQuery() {
+  const m = location.search.match(/[?&]webhook=(.+)$/);
+  if (!m) return "";
+  let url = m[1];
+  if (/^https%3A/i.test(url)) {
+    try { url = decodeURIComponent(url); } catch { return ""; }
+  }
+  return url;
+}
 const CONFIG = {
-  webhookUrl: safeWebhook(new URLSearchParams(location.search).get('webhook') || ""),
+  webhookUrl: safeWebhook(webhookFromQuery()),
   channelName: "Booking Form"
 };
 

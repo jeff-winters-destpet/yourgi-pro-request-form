@@ -511,6 +511,7 @@ footer.site .fine { font-size: 12.5px; color: var(--spot-black); margin-top: 10p
       </fieldset>
 
       <button type="submit" class="submit-btn">Find my match</button>
+      <p class="error" id="submitErr" aria-live="polite" data-msg="That didn't send. Give it one more try."></p>
       <p class="reassure">Your concierge texts back within the hour during business hours.</p>
     </div>
 
@@ -543,12 +544,11 @@ footer.site .fine { font-size: 12.5px; color: var(--spot-black); margin-top: 10p
 <script>
 /* =====================================================================
    CONFIG — wiring the form to Teams
-   Paste the "When a Teams webhook request is received" workflow URL
-   below (or pass it as ?webhook=<url> in the page URL).
-   NOTE: the stock Teams workflow template must be edited once to parse
-   text/plain bodies — see "Teams wiring guide.md", step 3. Without that
-   edit, posts from a browser will NOT reach the channel even though the
-   form shows success (no-cors responses are opaque by design).
+   Paste the Teams "Send webhook alerts to a channel" workflow URL below
+   (or pass it as ?webhook=<url> in the page URL). No flow edits needed:
+   the *.powerplatform.com trigger endpoints answer CORS preflight, so
+   the browser posts application/json directly and HTTP 202 confirms
+   Power Automate accepted the request.
    ===================================================================== */
 function safeWebhook(raw) {
   if (!raw) return "";
@@ -560,7 +560,7 @@ function safeWebhook(raw) {
 }
 const CONFIG = {
   webhookUrl: safeWebhook(new URLSearchParams(location.search).get('webhook') || ""),
-  channelName: "Concierge Requests"
+  channelName: "Booking Form"
 };
 
 /* Every submitter is anonymous: the public page has no login. The phone
@@ -786,23 +786,29 @@ $("reqForm").addEventListener("submit", async (e) => {
 
   let posted = false;
   if (CONFIG.webhookUrl) {
+    let status = 0;
     try {
-      /* text/plain + no-cors avoids the CORS preflight that Power Automate
-         cannot answer. REQUIRES the one-time flow edit from the wiring
-         guide (json(string(triggerOutputs()?['body']))) — the stock
-         template cannot parse a text/plain body. The response is opaque:
-         "posted" here means "left the device", not "delivered". */
-      await fetch(CONFIG.webhookUrl, {
+      /* The *.powerplatform.com trigger endpoint answers CORS preflight
+         (Access-Control-Allow-Origin: *), so the browser sends real JSON.
+         202 means Power Automate accepted the request; flow run history
+         holds any downstream failures. */
+      const res = await fetch(CONFIG.webhookUrl, {
         method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "text/plain;charset=UTF-8" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(teamsPayload)
       });
-      posted = true;
+      status = res.status;
+      posted = res.ok;
     } catch (err) {
       console.error("Webhook post failed:", err);
     }
-    track("request_post_result", { ok: posted });
+    track("request_post_result", { ok: posted, status: status });
+    if (!posted) {
+      showError(null, "submitErr");
+      btn.disabled = false; btn.textContent = "Find my match";
+      return;
+    }
+    clearError(null, "submitErr");
   }
 
   /* Confirmation */

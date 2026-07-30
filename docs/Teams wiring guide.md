@@ -27,10 +27,11 @@ Verified 2026-07-30: `application/json` returns HTTP 202 and posts the card. Not
 One Adaptive Card per request:
 
 - **Request ID** (YRQ-XXXX) for referencing the request in Send Blue threads
+- **Quoted flat rate** with the math (e.g. "$210 (2 nights x 2 pets x $50 + 5% fee)"). Rates are network medians from the production search API as of 2026-07-30, placeholders until Kai confirms official flat rates - see the RATES config in the form source.
 - Service, ZIP + likely market (rough prefix match: Denver, Dallas, Fort Worth, Houston, Boston, Portland, or "Outside current markets")
-- Pets (count; "6+" means six or more)
-- Date or drop-off/pick-up range, time window
-- Phone (the Send Blue channel and the match key), email if provided
+- Pets (count; "6+" means six or more), start date (plus computed end date for overnight stays), time window
+- Rewards interest (whether the pet parent checked the collar-levels line)
+- Phone (the Send Blue channel and the match key), email and notes if provided
 - **Match step**: the card reminds the concierge to look up the phone (and email) against existing pet parent data before texting, so known pet parents get greeted by name and their pets' names
 
 ## Delivery semantics

@@ -125,4 +125,16 @@ Not executable by script. Schedule the table-top with the concierge team per the
 
 **Pending human passes:** concierge ops dry-run (F), flow-off drill (E6), real iOS/Android (H1/H2), throttled network (H5), rotation + garbage drills (J1/J2), legal review of consent + guarantee wording.
 
-**Test artifact to ignore:** one card in Booking Form from (720) 555-0100 / concierge-test@example.com, Boarding $53 - that was this test run.
+**Test artifacts in Booking Form:** eight cards total from this test run, all from (720) 555-01XX numbers with example.com emails. The first ((720) 555-0100, Boarding $53) was the initial end-to-end proof; the seven below were the channel-visible battery run afterward at Jeff's request. Each card's phone number maps it to its test case:
+
+| Card phone | Case | Service | Expected on card |
+|---|---|---|---|
+| (720) 555-0101 | B3 multi-night | Boarding, 3 nights, 2 pets, Denver | Quoted $315 |
+| (720) 555-0102 | B7 daycare | Daycare, 3 days, 2 pets, Dallas | Quoted $252 |
+| (720) 555-0103 | B7 walking | Dog Walking, 3 walks, 2 pets, Boston | Quoted $126 |
+| (720) 555-0104 | B7 sitting | House Sitting, 3 nights, 2 pets, Portland | Quoted $315 |
+| (720) 555-0105 | B4 same-day | Boarding, 1 night, 1 pet, Houston | Quoted $53; note the "1 nights" grammar bug visible in the card |
+| (720) 555-0106 | B9 big quote | Boarding, 30 nights, 8 pets, Fort Worth | Quoted $12,600 (thousands separator) |
+| (720) 555-0107 | D3 edge ZIP | Dog Walking, 1 walk, 1 pet, ZIP 77590 (Texas City) | Accepted as in-market: the prefix false-positive, visible |
+
+All seven matched their expected on-screen totals and were delivery-confirmed (202-gated). E2/E3 are now live-verified for every service, not just by construction. The D3 card doubles as the decision exhibit: that request would reach a concierge as-is today.

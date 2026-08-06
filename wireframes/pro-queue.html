@@ -29,7 +29,9 @@ button { font:inherit; cursor:pointer; }
 .col h2 .n { background:var(--soft); border-radius:999px; padding:0 8px; font-size:12px; }
 
 .card { border:1.5px solid var(--line); border-radius:6px; background:#fff; padding:10px; margin-bottom:10px; font-size:12.5px; }
-.card .rid { font-size:10.5px; color:#999; letter-spacing:.06em; display:flex; justify-content:space-between; }
+.card .rid { font-size:10.5px; color:#999; letter-spacing:.06em; display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+.card .cust-name { font-size:13.5px; color:var(--ink); letter-spacing:normal; white-space:nowrap; }
+.card .expiry { font-size:11.5px; font-weight:700; color:#c0392b; margin-bottom:4px; }
 .card .svc { font-weight:700; font-size:14px; margin:2px 0; }
 .card .meta { color:#777; }
 .card .quote { margin-top:5px; font-weight:700; font-size:15px; }
@@ -148,6 +150,7 @@ button { font:inherit; cursor:pointer; }
 <div class="topbar" id="svcSettings">
   <span class="tag">Your Services &amp; Pricing settings (read-only here &mdash; set on the Services &amp; Pricing page)</span>
   <div class="muted" id="svcSummary" style="font-size:12.5px; width:100%"></div>
+  <div class="muted" style="font-size:12.5px; width:100%; margin-top:6px">The requests in the New column align with your Services and Availability.</div>
 </div>
 
 <div class="board">
@@ -265,13 +268,17 @@ function proVisibility(card, proKey) {
   if (active >= s.capacity) return { ok:false, reason:'At capacity (' + active + '/' + s.capacity + ')' };
   return { ok:true, reason:'Matches services & capacity (' + active + '/' + s.capacity + ')' };
 }
+var NOW = Date.now();
 var cards = [
   { id:'YRQ-8842', svc:'Boarding', dates:'Aug 10 - Aug 13', pets:2, market:'Denver 80227', quote:'$315', age:'2h ago', status:'new', owner:null,
-    parent:'Jilli M.', petNames:'Caro (Dog, 6) and Miso (Dog, 3)', start:'Mon, Aug 10, 2026 - 9:00 AM', duration:'3 nights', street:'100 Evergreen Rd', area:'Wash Park, Denver 80227', submitted:'Today 1:34 PM' },
+    parent:'Jilli M.', petNames:'Caro (Dog, 6) and Miso (Dog, 3)', start:'Mon, Aug 10, 2026 - 9:00 AM', duration:'3 nights', street:'100 Evergreen Rd', area:'Wash Park, Denver 80227', submitted:'Today 1:34 PM',
+    expiresAt: NOW + 95*60000 },
   { id:'YRQ-8836', svc:'Dog Walking', dates:'Aug 5, mornings', pets:1, market:'Denver 80211', quote:'$21', age:'4h ago', status:'new', owner:null,
-    parent:'Devon R.', petNames:'Pickle (Dog, 2)', start:'Wed, Aug 5, 2026 - 8:00 AM', duration:'30 minutes', street:'4212 Zuni St', area:'Sunnyside, Denver 80211', submitted:'Today 10:02 AM' },
+    parent:'Devon R.', petNames:'Pickle (Dog, 2)', start:'Wed, Aug 5, 2026 - 8:00 AM', duration:'30 minutes', street:'4212 Zuni St', area:'Sunnyside, Denver 80211', submitted:'Today 10:02 AM',
+    expiresAt: NOW + 47*60000 },
   { id:'YRQ-8829', svc:'House Sitting', dates:'Aug 15 - Aug 18', pets:3, market:'Lakewood 80227', quote:'$473', age:'6h ago', status:'new', owner:null,
-    parent:'Andrea O.', petNames:'Biscuit (Dog, 8), Mo (Cat, 4), Juno (Cat, 1)', start:'Sat, Aug 15, 2026 - 4:00 PM', duration:'3 nights', street:'880 S Kipling St', area:'Lakewood 80227', submitted:'Today 7:41 AM' },
+    parent:'Andrea O.', petNames:'Biscuit (Dog, 8), Mo (Cat, 4), Juno (Cat, 1)', start:'Sat, Aug 15, 2026 - 4:00 PM', duration:'3 nights', street:'880 S Kipling St', area:'Lakewood 80227', submitted:'Today 7:41 AM',
+    expiresAt: NOW + 19*60000 },
   { id:'YRQ-8815', svc:'Daycare', dates:'Aug 6', pets:1, market:'Denver 80202', quote:'$42', age:'1d ago', status:'rev', owner:'B',
     parent:'Sam T.', petNames:'Waffle (Dog, 5)', start:'Thu, Aug 6, 2026 - 7:30 AM', duration:'Full day', street:'1801 Blake St', area:'LoDo, Denver 80202', submitted:'Yesterday 3:20 PM' },
   { id:'YRQ-8801', svc:'Boarding', dates:'Aug 2 - Aug 4', pets:1, market:'Denver 80209', quote:'$105', age:'2d ago', status:'acc', owner:'A',
@@ -280,12 +287,27 @@ var cards = [
 var $ = function(id){ return document.getElementById(id); };
 function isConcierge(){ return me === 'C'; }
 
+/* Time remaining before an unclaimed request expires. Placeholder SLA
+   window - real duration TBD. Negative -> "Request expired" (still
+   claimable in this demo; a real build would escalate it). */
+function expiresInText(c) {
+  if (!c.expiresAt) return '';
+  var mins = Math.round((c.expiresAt - Date.now()) / 60000);
+  if (mins <= 0) return 'Request expired';
+  if (mins < 60) return 'Request expires in ' + mins + ' minute' + (mins === 1 ? '' : 's');
+  var h = Math.floor(mins / 60), m = mins % 60;
+  return 'Request expires in ' + h + 'h' + (m ? ' ' + m + 'm' : '');
+}
+
 function cardHtml(c) {
   var mine = c.owner === me;
   var concierge = isConcierge();
   var cls = 'card' + (c.status !== 'new' ? (mine ? ' mine' : ' locked') : '');
   var h = '<div class="' + cls + '" style="cursor:pointer" onclick="openDetail(\'' + c.id + '\')" title="Open request detail">';
-  h += '<div class="rid"><span>' + c.id + '</span><span>' + c.age + '</span></div>';
+  if (c.status === 'new' && c.expiresAt) {
+    h += '<div class="expiry">' + expiresInText(c) + '</div>';
+  }
+  h += '<div class="rid"><b class="cust-name">' + (c.parent || 'A new pet parent') + '</b><span>' + c.id + ' &middot; ' + c.age + '</span></div>';
   h += '<div class="svc">' + c.svc + ' &middot; ' + c.quote + '</div>';
   h += '<div class="meta">' + c.dates + ' &middot; ' + c.pets + ' pet' + (c.pets > 1 ? 's' : '') + ' &middot; ' + c.market + '</div>';
   var revealed = (c.phone || '(720) 555-0142') + ' &middot; unlocked on accept';
@@ -327,6 +349,8 @@ function render() {
   var visibleNew = cards.filter(function(c){ return c.status === 'new'; });
   var totalNew = visibleNew.length;
   if (!concierge) visibleNew = visibleNew.filter(function(c){ return proVisibility(c, me).ok; });
+  /* Oldest (soonest-expiring) on top. */
+  visibleNew.sort(function(a, b){ return (a.expiresAt || Infinity) - (b.expiresAt || Infinity); });
 
   var lists = { rev:'', acc:'' }, counts = { new: visibleNew.length, rev:0, acc:0 };
   var newHtml = visibleNew.map(cardHtml).join('');
@@ -472,7 +496,8 @@ function liveCards() {
       parent: 'New pet parent', petNames: (r.pets && r.pets.countLabel || '1') + ' pet (profile created at booking)',
       start: (r.dates && r.dates.start) || '', duration: units + ' ' + unit + (units > 1 ? 's' : ''),
       area: (r.likelyMarket || 'Market TBD') + ' ' + (r.zip || ''), street: '',
-      submitted: 'just now via the request form', notes: r.notes || '' };
+      submitted: 'just now via the request form', notes: r.notes || '',
+      expiresAt: new Date(r.submittedAt).getTime() + 60*60000 };
   });
 }
 function mergeLive() {
@@ -518,7 +543,8 @@ $('sim').onclick = function(){
   seq++;
   var svc = SVCS[seq % 4];
   cards.unshift({ id:'YRQ-88' + (50 + seq), svc:svc, dates:'Aug ' + (10 + seq % 15), pets:1 + seq % 3,
-    market:'Denver 802' + (10 + seq % 20), quote:'$' + (40 + (seq * 37) % 400), age:'just now', status:'new', owner:null });
+    market:'Denver 802' + (10 + seq % 20), quote:'$' + (40 + (seq * 37) % 400), age:'just now', status:'new', owner:null,
+    parent:'A new pet parent', expiresAt: Date.now() + 60*60000 });
   render();
   toast('Push sent to ' + (3 + seq % 4) + ' matching Pros: new ' + svc.toLowerCase() + ' request in Denver');
 };
@@ -533,6 +559,8 @@ function toast(msg){
   setTimeout(function(){ t.remove(); }, 3200);
 }
 render();
+/* Keep the expiry countdowns live without requiring an interaction. */
+setInterval(function(){ if (cards.some(function(c){ return c.status === 'new' && c.expiresAt; })) render(); }, 60000);
 </script>
 </body>
 </html>

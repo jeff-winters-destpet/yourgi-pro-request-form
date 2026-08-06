@@ -82,9 +82,61 @@ button { font:inherit; cursor:pointer; }
 .notes { border:1.5px dashed var(--line); border-radius:6px; padding:14px; position:relative; margin-top:14px; font-size:12.5px; color:#777; }
 .notes ul { margin-left:18px; }
 .notes li { margin-bottom:4px; }
+
+/* ===== Login screen ===== */
+.login-wrap { max-width:420px; margin:60px auto; padding:0 12px; }
+.login-wrap h1 { font-size:24px; margin-bottom:6px; }
+.login-wrap .muted { font-size:13px; margin-bottom:24px; display:block; }
+.acct-tile {
+  display:flex; align-items:center; gap:12px; width:100%;
+  border:1.5px solid var(--line); border-radius:8px; background:#fff;
+  padding:14px; margin-bottom:12px; text-align:left;
+}
+.acct-tile:hover { border-color:var(--ink); }
+.acct-tile .avatar { width:38px; height:38px; border-radius:50%; border:1.5px solid var(--line); background:var(--soft); flex:0 0 auto; }
+.acct-tile .info { flex:1; }
+.acct-tile .info b { display:block; font-size:15px; }
+.acct-tile .info span { font-size:12px; color:#999; }
+.acct-tile .go { border:1.5px solid var(--ink); border-radius:5px; padding:7px 12px; font-size:12px; background:#fff; flex:0 0 auto; }
+
+.board-top { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
+#switchUser { border:1.5px solid var(--line); background:#fff; border-radius:6px; padding:6px 12px; font-size:12px; }
 </style>
 </head>
 <body>
+
+<!-- ============ Login screen ============ -->
+<div id="loginScreen">
+  <div class="login-wrap">
+    <h1>Yourgi Pro Queue</h1>
+    <span class="muted">Sign in to see what this user sees. Switch anytime without losing the board's state.</span>
+
+    <button class="acct-tile" data-key="A">
+      <span class="avatar"></span>
+      <span class="info"><b>Colette Jackson</b><span>Pro &middot; Boarding, Daycare, Dog Walking, House Sitting</span></span>
+      <span class="go">Sign in &rarr;</span>
+    </button>
+    <button class="acct-tile" data-key="B">
+      <span class="avatar"></span>
+      <span class="info"><b>Alex Garcia</b><span>Pro &middot; Daycare, Dog Walking</span></span>
+      <span class="go">Sign in &rarr;</span>
+    </button>
+    <button class="acct-tile" data-key="C">
+      <span class="avatar"></span>
+      <span class="info"><b>Yourgi Concierge</b><span>Internal ops &middot; sees the master queue</span></span>
+      <span class="go">Sign in &rarr;</span>
+    </button>
+  </div>
+</div>
+
+<!-- ============ Board screen ============ -->
+<div id="boardScreen" style="display:none">
+
+<div class="board-top">
+  <button id="switchUser">&larr; Switch user</button>
+  <button class="sim" id="sim">+ Simulate new form request</button>
+  <button class="sim" id="resetLive" title="Clears requests fed in from the form demo">Reset live cards</button>
+</div>
 
 <div class="topbar" style="display:block">
   <span class="tag" id="roleTag">Pro-facing queue (in the Pro app / portal)</span>
@@ -93,46 +145,29 @@ button { font:inherit; cursor:pointer; }
   <div class="muted" id="conciergeSettingsSummary" style="display:none;margin-top:8px;font-size:11.5px"></div>
 </div>
 
-<div class="topbar">
-  <span class="tag">Demo controls (not part of the concept UI)</span>
-  <div class="who" style="margin-left:0">
-    <span class="muted">Viewing as:</span>
-    <button id="proA" aria-pressed="true">Colette Jackson</button>
-    <button id="proB" aria-pressed="false">Alex Garcia</button>
-    <button id="proC" aria-pressed="false">Yourgi Concierge</button>
-    <button class="sim" id="sim">+ Simulate new form request</button>
-    <button class="sim" id="resetLive" title="Clears requests fed in from the form demo">Reset live cards</button>
-  </div>
-</div>
-
 <div class="topbar" id="svcSettings">
   <span class="tag">Your Services &amp; Pricing settings (read-only here &mdash; set on the Services &amp; Pricing page)</span>
   <div class="muted" id="svcSummary" style="font-size:12.5px; width:100%"></div>
 </div>
 
-<div class="layout">
-  <div class="board">
-    <div class="col" id="col-new">
-      <h2>New Requests <span class="n" id="n-new">0</span></h2>
-      <div class="muted" id="newFilterNote" style="margin:-6px 0 8px; font-size:11px"></div>
-      <div id="list-new"></div>
-    </div>
-    <div class="col" id="col-rev">
-      <h2>Reviewing <span class="n" id="n-rev">0</span></h2>
-      <div id="list-rev"></div>
-    </div>
-    <div class="col" id="col-acc">
-      <h2>Accepted <span class="n" id="n-acc">0</span></h2>
-      <div id="list-acc"></div>
-    </div>
+<div class="board">
+  <div class="col" id="col-new">
+    <h2>New Requests <span class="n" id="n-new">0</span></h2>
+    <div class="muted" id="newFilterNote" style="margin:-6px 0 8px; font-size:11px"></div>
+    <div id="list-new"></div>
   </div>
-
-  <div class="rail">
-    <h2>Pro app: Bookings</h2>
-    <div class="sub" id="railWho">Colette Jackson's list (mock of the existing bookings screen)</div>
-    <div id="bookings"></div>
+  <div class="col" id="col-rev">
+    <h2>Reviewing <span class="n" id="n-rev">0</span></h2>
+    <div id="list-rev"></div>
+  </div>
+  <div class="col" id="col-acc">
+    <h2>Accepted <span class="n" id="n-acc">0</span></h2>
+    <div id="list-acc"></div>
   </div>
 </div>
+
+</div>
+<!-- /#boardScreen -->
 
 <!-- Request detail modal: what a Pro sees when they open a card -->
 <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="mTitle">
@@ -200,22 +235,6 @@ button { font:inherit; cursor:pointer; }
       </div>
     </div>
   </div>
-</div>
-
-<div class="notes">
-  <span class="tag">Mechanics this concept assumes (annotations, not UI)</span>
-  <ul>
-    <li><b>Matched notifications:</b> when a request lands, Pros who match it (service offered, coverage area, availability) get a push notification and come check the board. The board itself is the shared source of truth; the notification is just the doorbell.</li>
-    <li><b>Exclusive claim:</b> pulling a card to Reviewing locks it to that Pro. Others see it grayed with the owner's name. (Server enforces the race: first claim wins.)</li>
-    <li><b>Claims expire:</b> a claimed card auto-releases back to New Requests after 24h so requests don't rot in Reviewing. Shown on each claimed card.</li>
-    <li><b>Contact gating:</b> the parent's phone/email stay masked until Accepted. Reviewing-stage communication happens through the platform (or concierge relay), which also protects the flat rate from off-platform deals.</li>
-    <li><b>Accepted = booked:</b> accepting writes the appointment to the Pro's bookings list (right rail) at the quoted flat rate, and notifies the parent.</li>
-    <li><b>Payout vs. flat rate (open question):</b> the parent pays the flat rate; the Pro sees their own payout. Under the Potemkin model Yourgi absorbs the difference, so these two numbers differ on purpose. The demo shows a placeholder payout - the real formula is a pricing/finance decision.</li>
-    <li><b>Address gating (open question):</b> the detail view shows the neighborhood before accept and the full street address after. Dog walking arguably needs the address earlier; boarding does not. Decide per service.</li>
-    <li><b>Escalation:</b> cards aging past a threshold with no claim get flagged to the concierge team (today's Teams channel keeps working as the fallback + audit log).</li>
-    <li><b>Master queue (Concierge role):</b> Yourgi Concierge sees every request across every Pro, unfiltered and unmasked (matches what the Teams channel already shows concierge today). Concierge doesn't claim or accept; they oversee, and can force-release a stuck Reviewing card back to New.</li>
-    <li><b>Per-Pro filtering (Services &amp; Pricing):</b> each Pro's New Requests only shows what matches the services they've turned on, and disappears once they're at their weekly capacity or have paused new requests. Two Pros looking at the same instant see different queues by design. Settings are read-only here - a Pro changes them on the actual Services &amp; Pricing page, not from the queue. Switch between Colette and Alex above to see the difference (Alex doesn't offer Boarding or House Sitting).</li>
-  </ul>
 </div>
 
 <script>
@@ -323,11 +342,6 @@ function render() {
     ? (totalNew ? 'Master queue - all ' + totalNew + ' unfiltered' : '')
     : (hiddenCount > 0 ? hiddenCount + ' more request' + (hiddenCount > 1 ? 's' : '') + " don't match your services or capacity" : (totalNew ? 'All open requests match your settings' : ''));
 
-  var railCards = concierge ? cards.filter(function(c){ return c.status === 'acc'; }) : cards.filter(function(c){ return c.status === 'acc' && c.owner === me; });
-  $('bookings').innerHTML = railCards.length
-    ? railCards.map(function(c){ return '<div class="booking"><b>' + c.svc + ' &middot; ' + c.quote + (concierge ? ' &middot; ' + PROS[c.owner] : '') + '</b>' + c.dates + '<div class="muted">' + c.market + ' &middot; from concierge queue &middot; ' + c.id + '</div></div>'; }).join('')
-    : '<div class="empty">Accepted requests appear here as appointments</div>';
-  $('railWho').textContent = concierge ? "All Pros' bookings (master view)" : PROS[me] + "'s list (mock of the existing bookings screen)";
   $('proName').textContent = concierge ? CONCIERGE_NAME : PROS[me];
   $('roleTag').textContent = concierge ? 'Internal ops view (Yourgi Concierge)' : 'Pro-facing queue (in the Pro app / portal)';
   $('roleSub').textContent = concierge
@@ -485,16 +499,21 @@ $('resetLive').onclick = function () {
 };
 mergeLive();
 
+/* ===== Login / logout: sign in as one of three users to see their view ===== */
 function setViewer(key){
   me = key;
-  ['proA','proB','proC'].forEach(function(btnId, i){
-    $(btnId).setAttribute('aria-pressed', String(['A','B','C'][i] === key));
-  });
   render();
+  $('loginScreen').style.display = 'none';
+  $('boardScreen').style.display = '';
 }
-$('proA').onclick = function(){ setViewer('A'); };
-$('proB').onclick = function(){ setViewer('B'); };
-$('proC').onclick = function(){ setViewer('C'); };
+document.querySelectorAll('.acct-tile').forEach(function(btn){
+  btn.onclick = function(){ setViewer(btn.dataset.key); };
+});
+$('switchUser').onclick = function(){
+  $('boardScreen').style.display = 'none';
+  $('loginScreen').style.display = '';
+  if (openId) closeDetail();
+};
 $('sim').onclick = function(){
   seq++;
   var svc = SVCS[seq % 4];

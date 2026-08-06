@@ -857,6 +857,16 @@ $("reqForm").addEventListener("submit", async (e) => {
     clearError(null, "submitErr");
   }
 
+  /* Queue demo wiring: the Pro queue wireframe on this same origin reads
+     this list (localStorage bridge, per-browser). The Teams webhook above
+     remains the real intake; this feeds the concept demo only. */
+  try {
+    const QKEY = "yourgi-queue-requests";
+    const qlist = JSON.parse(localStorage.getItem(QKEY) || "[]");
+    qlist.unshift(req);
+    localStorage.setItem(QKEY, JSON.stringify(qlist.slice(0, 50)));
+  } catch (e) {}
+
   $("formBody").style.display = "none";
   $("confirm").classList.add("show");
   $("confirmPhone").textContent = req.contact.phone;

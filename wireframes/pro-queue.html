@@ -50,6 +50,35 @@ button { font:inherit; cursor:pointer; }
 .booking .muted { font-size:11px; }
 .empty { color:#bbb; font-size:12px; padding:16px 6px; text-align:center; }
 
+/* ===== Request detail modal (mirrors the Pro app booking detail) ===== */
+.overlay { position:fixed; inset:0; background:rgba(0,0,0,.35); display:none; align-items:flex-start; justify-content:center; padding:24px 12px; overflow:auto; z-index:50; }
+.overlay.show { display:flex; }
+.modal { background:#fff; border:2px solid var(--ink); border-radius:8px; width:100%; max-width:860px; padding:16px; }
+.m-head { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.m-head .avatar { width:30px; height:30px; border-radius:50%; border:1.5px solid var(--line); background:var(--soft); flex:0 0 auto; }
+.m-head h2 { font-size:19px; flex:1; }
+.m-head button { border:1.5px solid var(--line); background:#fff; border-radius:5px; width:30px; height:30px; font-size:14px; }
+.m-banner { border:1.5px solid var(--line); background:#f6f6f6; border-radius:6px; padding:12px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+.m-banner .txt { flex:1; min-width:180px; font-size:13px; }
+.m-banner .txt b { font-size:14px; }
+.m-banner .txt .when { color:#999; font-size:11.5px; }
+.m-banner button { border:1.5px solid var(--ink); background:#fff; border-radius:5px; padding:9px 14px; font-size:12.5px; }
+.m-banner button.primary { background:var(--ink); color:#fff; }
+.m-grid { display:grid; grid-template-columns:1fr; gap:12px; }
+@media(min-width:760px){ .m-grid { grid-template-columns:1fr 1fr 1fr; align-items:start; } }
+.m-card { border:1.5px solid var(--line); border-radius:6px; padding:12px; margin-bottom:12px; }
+.m-card h3 { font-size:13.5px; margin-bottom:8px; }
+.m-card .row { display:flex; align-items:center; gap:9px; font-size:12.5px; }
+.m-card .row .dot { width:26px; height:26px; border-radius:50%; border:1.5px solid var(--line); background:var(--soft); flex:0 0 auto; }
+.m-card .row .chev { margin-left:auto; color:#bbb; }
+.m-card .lab { font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:#999; margin-top:8px; }
+.m-card .val { font-size:13px; }
+.m-card .link { font-size:12px; text-decoration:underline; color:#777; display:inline-block; margin-top:8px; }
+.m-card .payout { font-size:24px; font-weight:700; }
+.m-card .sub { font-size:11.5px; color:#999; }
+.m-map { height:120px; border:1.5px solid var(--line); border-radius:6px; background:repeating-linear-gradient(45deg,#f4f4f4,#f4f4f4 8px,#fbfbfb 8px,#fbfbfb 16px); display:flex; align-items:center; justify-content:center; color:#aaa; font-size:12px; margin-bottom:8px; }
+.m-note { font-size:11px; color:#999; border-top:1px dashed #ddd; margin-top:10px; padding-top:8px; }
+
 .notes { border:1.5px dashed var(--line); border-radius:6px; padding:14px; position:relative; margin-top:14px; font-size:12.5px; color:#777; }
 .notes ul { margin-left:18px; }
 .notes li { margin-bottom:4px; }
@@ -97,6 +126,72 @@ button { font:inherit; cursor:pointer; }
   </div>
 </div>
 
+<!-- Request detail modal: what a Pro sees when they open a card -->
+<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+  <div class="modal">
+    <div class="m-head">
+      <span class="avatar"></span>
+      <h2 id="mTitle" tabindex="-1">Request detail</h2>
+      <button id="mClose" aria-label="Close">X</button>
+    </div>
+
+    <div class="m-banner">
+      <div class="txt">
+        <b id="mWho">Someone wants to book with you</b> &middot; <span id="mSubmitted">Submitted today</span>
+        <div class="when" id="mWhen"></div>
+      </div>
+      <button id="mDecline">I'm not available</button>
+      <button class="primary" id="mAccept">Accept</button>
+    </div>
+
+    <div class="m-grid">
+      <div>
+        <div class="m-card">
+          <h3>Customer Profile</h3>
+          <div class="row"><span class="dot"></span><span id="mCust">Pet parent</span><span class="chev">&rsaquo;</span></div>
+          <a class="link" href="#" onclick="return false">Message Customer</a>
+          <div class="m-note" id="mContactNote">Contact stays masked until you accept. Messaging goes through the platform.</div>
+        </div>
+        <div class="m-card">
+          <h3>Pet Profiles</h3>
+          <div class="row"><span class="dot"></span><span id="mPets">Pets</span><span class="chev">&rsaquo;</span></div>
+        </div>
+        <div class="m-card">
+          <h3>Your Payout</h3>
+          <div class="payout" id="mPayout">$0</div>
+          <div class="sub" id="mPayoutSub">Pending confirmation</div>
+          <div class="m-note" id="mPayoutNote"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="m-card">
+          <h3>Details</h3>
+          <div class="lab">Service</div><div class="val" id="mService"></div>
+          <div class="lab">Start</div><div class="val" id="mStart"></div>
+          <div class="lab">Duration</div><div class="val" id="mDuration"></div>
+          <div class="lab">Pets</div><div class="val" id="mPetCount"></div>
+          <div class="lab">Parent pays (flat rate)</div><div class="val" id="mQuote"></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="m-card">
+          <h3>Location</h3>
+          <div class="m-map">map</div>
+          <div class="lab">Customer's Home</div>
+          <div class="val" id="mAddress"></div>
+          <a class="link" href="#" onclick="return false">Get Directions</a>
+        </div>
+        <div class="m-card">
+          <h3>Help &amp; FAQs <span class="chev">&rsaquo;</span></h3>
+          <a class="link" href="#" onclick="return false">Report an Issue</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="notes">
   <span class="tag">Mechanics this concept assumes (annotations, not UI)</span>
   <ul>
@@ -105,6 +200,8 @@ button { font:inherit; cursor:pointer; }
     <li><b>Claims expire:</b> a claimed card auto-releases back to New Requests after 24h so requests don't rot in Reviewing. Shown on each claimed card.</li>
     <li><b>Contact gating:</b> the parent's phone/email stay masked until Accepted. Reviewing-stage communication happens through the platform (or concierge relay), which also protects the flat rate from off-platform deals.</li>
     <li><b>Accepted = booked:</b> accepting writes the appointment to the Pro's bookings list (right rail) at the quoted flat rate, and notifies the parent.</li>
+    <li><b>Payout vs. flat rate (open question):</b> the parent pays the flat rate; the Pro sees their own payout. Under the Potemkin model Yourgi absorbs the difference, so these two numbers differ on purpose. The demo shows a placeholder payout - the real formula is a pricing/finance decision.</li>
+    <li><b>Address gating (open question):</b> the detail view shows the neighborhood before accept and the full street address after. Dog walking arguably needs the address earlier; boarding does not. Decide per service.</li>
     <li><b>Escalation:</b> cards aging past a threshold with no claim get flagged to the concierge team (today's Teams channel keeps working as the fallback + audit log).</li>
   </ul>
 </div>
@@ -114,11 +211,16 @@ var PROS = { A: "Colette Jackson", B: "Alex Garcia" };
 var me = 'A';
 var seq = 8;
 var cards = [
-  { id:'YRQ-8842', svc:'Boarding', dates:'Aug 10 - Aug 13', pets:2, market:'Denver 80227', quote:'$315', age:'2h ago', status:'new', owner:null },
-  { id:'YRQ-8836', svc:'Dog Walking', dates:'Aug 5, mornings', pets:1, market:'Denver 80211', quote:'$21', age:'4h ago', status:'new', owner:null },
-  { id:'YRQ-8829', svc:'House Sitting', dates:'Aug 15 - Aug 18', pets:3, market:'Lakewood 80227', quote:'$473', age:'6h ago', status:'new', owner:null },
-  { id:'YRQ-8815', svc:'Daycare', dates:'Aug 6', pets:1, market:'Denver 80202', quote:'$42', age:'1d ago', status:'rev', owner:'B' },
-  { id:'YRQ-8801', svc:'Boarding', dates:'Aug 2 - Aug 4', pets:1, market:'Denver 80209', quote:'$105', age:'2d ago', status:'acc', owner:'A' }
+  { id:'YRQ-8842', svc:'Boarding', dates:'Aug 10 - Aug 13', pets:2, market:'Denver 80227', quote:'$315', age:'2h ago', status:'new', owner:null,
+    parent:'Jilli M.', petNames:'Caro (Dog, 6) and Miso (Dog, 3)', start:'Mon, Aug 10, 2026 - 9:00 AM', duration:'3 nights', street:'100 Evergreen Rd', area:'Wash Park, Denver 80227', submitted:'Today 1:34 PM' },
+  { id:'YRQ-8836', svc:'Dog Walking', dates:'Aug 5, mornings', pets:1, market:'Denver 80211', quote:'$21', age:'4h ago', status:'new', owner:null,
+    parent:'Devon R.', petNames:'Pickle (Dog, 2)', start:'Wed, Aug 5, 2026 - 8:00 AM', duration:'30 minutes', street:'4212 Zuni St', area:'Sunnyside, Denver 80211', submitted:'Today 10:02 AM' },
+  { id:'YRQ-8829', svc:'House Sitting', dates:'Aug 15 - Aug 18', pets:3, market:'Lakewood 80227', quote:'$473', age:'6h ago', status:'new', owner:null,
+    parent:'Andrea O.', petNames:'Biscuit (Dog, 8), Mo (Cat, 4), Juno (Cat, 1)', start:'Sat, Aug 15, 2026 - 4:00 PM', duration:'3 nights', street:'880 S Kipling St', area:'Lakewood 80227', submitted:'Today 7:41 AM' },
+  { id:'YRQ-8815', svc:'Daycare', dates:'Aug 6', pets:1, market:'Denver 80202', quote:'$42', age:'1d ago', status:'rev', owner:'B',
+    parent:'Sam T.', petNames:'Waffle (Dog, 5)', start:'Thu, Aug 6, 2026 - 7:30 AM', duration:'Full day', street:'1801 Blake St', area:'LoDo, Denver 80202', submitted:'Yesterday 3:20 PM' },
+  { id:'YRQ-8801', svc:'Boarding', dates:'Aug 2 - Aug 4', pets:1, market:'Denver 80209', quote:'$105', age:'2d ago', status:'acc', owner:'A',
+    parent:'Catherine G.', petNames:'Nugget (Dog, 4)', start:'Sun, Aug 2, 2026 - 10:00 AM', duration:'2 nights', street:'305 S Downing St', area:'Wash Park, Denver 80209', submitted:'2 days ago' }
 ];
 var SVCS = ['Boarding','Daycare','Dog Walking','House Sitting'];
 var $ = function(id){ return document.getElementById(id); };
@@ -126,7 +228,7 @@ var $ = function(id){ return document.getElementById(id); };
 function cardHtml(c) {
   var mine = c.owner === me;
   var cls = 'card' + (c.status !== 'new' ? (mine ? ' mine' : ' locked') : '');
-  var h = '<div class="' + cls + '">';
+  var h = '<div class="' + cls + '" style="cursor:pointer" onclick="openDetail(\'' + c.id + '\')" title="Open request detail">';
   h += '<div class="rid"><span>' + c.id + '</span><span>' + c.age + '</span></div>';
   h += '<div class="svc">' + c.svc + ' &middot; ' + c.quote + '</div>';
   h += '<div class="meta">' + c.dates + ' &middot; ' + c.pets + ' pet' + (c.pets > 1 ? 's' : '') + ' &middot; ' + c.market + '</div>';
@@ -140,9 +242,9 @@ function cardHtml(c) {
     h += '<div class="lockline">Booked by ' + (mine ? 'you' : PROS[c.owner]) + ' at the quoted flat rate</div>';
   }
   if (c.status === 'new') {
-    h += '<div class="actions"><button class="primary" onclick="claim(\'' + c.id + '\')">Claim &rarr; Reviewing</button></div>';
+    h += '<div class="actions"><button class="primary" onclick="event.stopPropagation();claim(\'' + c.id + '\')">Claim &rarr; Reviewing</button></div>';
   } else if (c.status === 'rev' && mine) {
-    h += '<div class="actions"><button onclick="release(\'' + c.id + '\')">&larr; Release</button><button class="primary" onclick="accept(\'' + c.id + '\')">Accept booking &rarr;</button></div>';
+    h += '<div class="actions"><button onclick="event.stopPropagation();release(\'' + c.id + '\')">&larr; Release</button><button class="primary" onclick="event.stopPropagation();accept(\'' + c.id + '\')">Accept booking &rarr;</button></div>';
   }
   return h + '</div>';
 }
@@ -164,7 +266,62 @@ function render() {
 
 window.claim = function(id){ var c = cards.find(function(x){ return x.id === id; }); c.status = 'rev'; c.owner = me; render(); };
 window.release = function(id){ var c = cards.find(function(x){ return x.id === id; }); c.status = 'new'; c.owner = null; render(); };
-window.accept = function(id){ var c = cards.find(function(x){ return x.id === id; }); c.status = 'acc'; render(); };
+window.accept = function(id){ var c = cards.find(function(x){ return x.id === id; }); c.status = 'acc'; c.owner = c.owner || me; render(); };
+
+/* ===== Request detail modal: what a Pro sees when they open a request ===== */
+var openId = null, lastFocus = null;
+function byId(id){ return cards.find(function(c){ return c.id === id; }); }
+function money(q){ return parseFloat(String(q).replace(/[^0-9.]/g, '')) || 0; }
+
+window.openDetail = function(id){
+  var c = byId(id); if (!c) return;
+  openId = id; lastFocus = document.activeElement;
+  var accepted = c.status === 'acc';
+  var named = c.parent && !/^new pet parent$/i.test(c.parent);
+  var firstName = named ? c.parent.split(' ')[0] : '';
+  var petLabel = c.petNames || (c.pets + ' pet' + (c.pets > 1 ? 's' : '') + ' (details with the parent)');
+  var petFirst = /^\d/.test(petLabel) ? '' : petLabel.split(' (')[0].split(' and ')[0];
+  var day = (c.dates || '').split(' - ')[0];
+
+  $('mTitle').textContent = c.svc + (petFirst ? ' for ' + petFirst : '') + (day ? ' on ' + day : '');
+  $('mWho').textContent = (named ? firstName : 'A new pet parent') + ' wants to book with you';
+  $('mSubmitted').textContent = 'Submitted ' + (c.submitted || c.age);
+  $('mWhen').textContent = 'Request ' + c.id;
+  $('mCust').textContent = c.parent || 'Pet parent';
+  $('mPets').textContent = petLabel;
+  $('mService').textContent = c.svc;
+  $('mStart').textContent = c.start || c.dates;
+  $('mDuration').textContent = c.duration || c.dates;
+  $('mPetCount').textContent = c.pets + ' pet' + (c.pets > 1 ? 's' : '');
+  $('mQuote').textContent = c.quote + ' flat rate';
+
+  /* Payout placeholder: Pro's own rate, not the parent's flat rate. */
+  var payout = Math.round(money(c.quote) * 0.8);
+  $('mPayout').textContent = '$' + payout.toLocaleString();
+  $('mPayoutSub').textContent = accepted ? 'Confirmed' : 'Pending confirmation';
+  $('mPayoutNote').textContent = 'Placeholder figure. The parent pays ' + c.quote + '; Yourgi absorbs the difference under the flat-rate model.';
+
+  $('mAddress').textContent = accepted ? (c.street ? c.street + ', ' + c.area : c.market) : (c.area || c.market) + ' (approximate until accepted)';
+  $('mContactNote').textContent = accepted
+    ? 'Contact unlocked. You can message or call the parent directly.'
+    : 'Contact stays masked until you accept. Messaging goes through the platform.';
+
+  var claimedByOther = c.owner && c.owner !== me;
+  $('mAccept').style.display = accepted || claimedByOther ? 'none' : '';
+  $('mDecline').style.display = accepted || claimedByOther ? 'none' : '';
+  $('mAccept').textContent = c.status === 'new' ? 'Accept' : 'Accept';
+  if (accepted) { $('mWho').textContent = 'Booked' + (c.owner === me ? ' by you' : ' by ' + PROS[c.owner]); }
+  else if (claimedByOther) { $('mWho').textContent = 'Claimed by ' + PROS[c.owner] + ' - locked to them'; }
+
+  $('overlay').classList.add('show');
+  $('mTitle').focus();
+};
+function closeDetail(){ $('overlay').classList.remove('show'); openId = null; if (lastFocus) lastFocus.focus(); }
+$('mClose').onclick = closeDetail;
+$('overlay').addEventListener('click', function(e){ if (e.target === $('overlay')) closeDetail(); });
+document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && openId) closeDetail(); });
+$('mAccept').onclick = function(){ var id = openId; accept(id); closeDetail(); toast('Accepted - added to your bookings'); };
+$('mDecline').onclick = function(){ var id = openId; release(id); closeDetail(); toast('Sent back to New Requests for another Pro'); };
 
 /* ===== Live wiring: same-origin request form feeds this board =====
    The form (index.html on this origin) writes submitted requests to
@@ -184,10 +341,16 @@ function liveCards() {
   try { list = JSON.parse(localStorage.getItem(QKEY) || '[]'); } catch (e) { return []; }
   return list.map(function (r) {
     var dates = r.dates ? (r.dates.start + (r.dates.end ? ' - ' + r.dates.end : '')) : '';
+    var units = (r.quote && r.quote.units) || 1;
+    var unit = (r.quote && r.quote.unit) || 'day';
     return { id: r.requestId, svc: r.service, dates: dates, pets: (r.pets && r.pets.count) || 1,
       market: (r.likelyMarket || '') + ' ' + (r.zip || ''), quote: '$' + ((r.quote && r.quote.total) || '?'),
       age: ageOf(r.submittedAt), status: 'new', owner: null, live: true,
-      phone: r.contact && r.contact.phone };
+      phone: r.contact && r.contact.phone,
+      parent: 'New pet parent', petNames: (r.pets && r.pets.countLabel || '1') + ' pet (profile created at booking)',
+      start: (r.dates && r.dates.start) || '', duration: units + ' ' + unit + (units > 1 ? 's' : ''),
+      area: (r.likelyMarket || 'Market TBD') + ' ' + (r.zip || ''), street: '',
+      submitted: 'just now via the request form', notes: r.notes || '' };
   });
 }
 function mergeLive() {

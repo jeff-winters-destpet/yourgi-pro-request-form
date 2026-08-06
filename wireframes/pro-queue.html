@@ -236,7 +236,7 @@ function cardHtml(c) {
   h += '<div class="contact">' + (c.status === 'acc' && mine ? 'Parent: ' + revealed : 'Parent contact: masked until accepted') + '</div>';
   if (c.live) h += '<div class="contact" style="color:#666">&#9679; live from the request form</div>';
   if (c.status === 'rev') {
-    h += '<div class="lockline">' + (mine ? 'Claimed by you &middot; auto-releases in 24h' : 'Claimed by ' + PROS[c.owner] + ' &middot; <span class="owner">locked</span>') + '</div>';
+    h += '<div class="lockline">' + (mine ? 'Claimed by you &middot; auto-releases in 24h' : 'Claimed by another Pro &middot; <span class="owner">locked</span>') + '</div>';
   }
   if (c.status === 'acc') {
     h += '<div class="lockline">Booked by ' + (mine ? 'you' : PROS[c.owner]) + ' at the quoted flat rate</div>';
@@ -311,7 +311,7 @@ window.openDetail = function(id){
   $('mDecline').style.display = accepted || claimedByOther ? 'none' : '';
   $('mAccept').textContent = c.status === 'new' ? 'Accept' : 'Accept';
   if (accepted) { $('mWho').textContent = 'Booked' + (c.owner === me ? ' by you' : ' by ' + PROS[c.owner]); }
-  else if (claimedByOther) { $('mWho').textContent = 'Claimed by ' + PROS[c.owner] + ' - locked to them'; }
+  else if (claimedByOther) { $('mWho').textContent = 'Claimed by another Pro - locked to them'; }
 
   $('overlay').classList.add('show');
   $('mTitle').focus();

@@ -303,8 +303,8 @@ footer.site .fine { font-size: 12.5px; color: var(--spot-black); margin-top: 10p
 
 <!-- INTERNAL PROTOTYPE BAR: remove before any customer-facing pilot -->
 <div class="demo-bar" id="demoBar">
-  <strong>PROTOTYPE</strong>
-  <span class="wh-status"><span class="wh-dot" id="whDot"></span><span id="whLabel">Demo mode: no webhook configured</span></span>
+  <strong>CONCEPT DEMO</strong>
+  <span class="wh-status">Not connected to production. Submissions feed the Pro queue board demo.</span>
 </div>
 
 <header class="site">
@@ -502,7 +502,6 @@ footer.site .fine { font-size: 12.5px; color: var(--spot-black); margin-top: 10p
 
       <p class="consent">By submitting, you agree Yourgi may text you about this request. Message and data rates may apply.</p>
       <button type="submit" class="cta-btn" style="margin-top:2px">Send my request</button>
-      <p class="error" id="submitErr" aria-live="polite" data-msg="That didn't send. Give it one more try."></p>
       <p class="reassure">Your concierge texts back within the hour during business hours.</p>
     </div>
   </div>
@@ -519,14 +518,14 @@ footer.site .fine { font-size: 12.5px; color: var(--spot-black); margin-top: 10p
     <p class="guarantee-line">Every Yourgi Pro booking is backed by the Yourgi Guarantee*. If you don't love it, Yourgi makes it right.</p>
     <button type="button" class="again" id="againBtn">Request another service</button>
     <div class="demo-note" id="demoNote" style="display:none">
-      <strong>Internal note:</strong> no webhook is configured, so nothing was posted to Teams. The payload below is exactly what the concierge channel would receive. Add <code>?webhook=&lt;url&gt;</code> to the page URL or set <code>CONFIG.webhookUrl</code> to go live.
+      <strong>Internal note:</strong> concept demo only. Nothing was sent to the concierge team or any external system. This request now appears on the <a href="wireframes/pro-queue.html">Pro queue board</a> in this browser; the payload below is what a production intake would receive.
     </div>
   </div>
   </form>
 
   <!-- INTERNAL: what the concierge team sees in Teams -->
-  <section class="preview" id="preview" aria-label="Internal preview of the Teams post">
-    <h3>Internal preview &middot; Teams post to the concierge channel</h3>
+  <section class="preview" id="preview" aria-label="Internal preview of the request payload">
+    <h3>Internal preview &middot; request payload (feeds the queue demo)</h3>
     <pre id="previewJson"></pre>
   </section>
 </main>
@@ -538,31 +537,12 @@ footer.site .fine { font-size: 12.5px; color: var(--spot-black); margin-top: 10p
 
 <script>
 /* =====================================================================
-   CONFIG — wiring the form to Teams
-   Paste the Teams webhook workflow URL below (or pass it as
-   ?webhook=<url> in the page URL, raw or percent-encoded).
+   DECOUPLED FROM PRODUCTION (2026-08-06, Jeff's instruction).
+   This demo posts to no external endpoint. The production webhook and
+   its Power Automate flow belong to the live page and are off-limits.
+   Submissions here feed the same-origin Pro queue board (localStorage)
+   and nothing else. Any ?webhook= query parameter is ignored.
    ===================================================================== */
-function safeWebhook(raw) {
-  if (!raw) return "";
-  try {
-    const u = new URL(raw);
-    const okHost = u.hostname.endsWith(".logic.azure.com") || u.hostname.endsWith(".powerplatform.com");
-    return (u.protocol === "https:" && okHost) ? raw : "";
-  } catch { return ""; }
-}
-function webhookFromQuery() {
-  const m = location.search.match(/[?&]webhook=(.+)$/);
-  if (!m) return "";
-  let url = m[1];
-  if (/^https%3A/i.test(url)) {
-    try { url = decodeURIComponent(url); } catch { return ""; }
-  }
-  return url;
-}
-const CONFIG = {
-  webhookUrl: safeWebhook(webhookFromQuery()),
-  channelName: "Booking Form"
-};
 
 /* =====================================================================
    FLAT RATES — per unit, per pet, before the 5% service fee.
@@ -622,11 +602,6 @@ const $ = id => document.getElementById(id);
 const localISO = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
 const TODAY = localISO(new Date());
 const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-if (CONFIG.webhookUrl) {
-  $("whDot").classList.add("live");
-  $("whLabel").textContent = "Live: posting to \"" + CONFIG.channelName + "\"";
-}
 
 function showError(inputId, errId, msg) {
   const el = $(errId);
@@ -782,84 +757,18 @@ function buildRequest() {
   };
 }
 
-function factRow(title, value) { return { title: title, value: String(value) }; }
-
-function buildTeamsPayload(req) {
-  const facts = [
-    factRow("Request", req.requestId),
-    factRow("Service", req.service),
-    factRow("Quoted", req.quote.display),
-    factRow("ZIP", req.zip + " (" + req.likelyMarket + ")"),
-    factRow("Pets", req.pets.countLabel),
-    factRow("Start", req.dates.start),
-    ...(req.dates.end ? [factRow("End", req.dates.end)] : []),
-    factRow("Time", req.timeWindow),
-    factRow("Phone", req.contact.phone),
-    factRow("Email", req.contact.email || "Not provided"),
-    factRow("Rewards", req.rewardsInterest ? "Interested in earning rewards" : "Not indicated"),
-    factRow("Match", "Pending. Look up the phone number in pet parent data before texting; known pet parents get greeted by name.")
-  ];
-  return {
-    type: "message",
-    attachments: [{
-      contentType: "application/vnd.microsoft.card.adaptive",
-      content: {
-        "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
-        type: "AdaptiveCard",
-        version: "1.4",
-        body: [
-          { type: "TextBlock", text: "NEW PRO SERVICE REQUEST", weight: "Bolder", size: "Medium" },
-          { type: "TextBlock", text: req.service + " in " + req.zip + " at flat rate " + "$" + req.quote.total + " - respond via Send Blue", isSubtle: true, spacing: "None", wrap: true },
-          { type: "FactSet", facts: facts },
-          ...(req.notes ? [{ type: "TextBlock", text: "Notes from the pet parent: " + req.notes, wrap: true }] : []),
-          { type: "TextBlock", text: "Submitted " + req.submittedAt + " via yourgi.com request form", isSubtle: true, size: "Small", wrap: true }
-        ]
-      }
-    }]
-  };
-}
-
 /* ============ Submit ============ */
-$("reqForm").addEventListener("submit", async (e) => {
+$("reqForm").addEventListener("submit", (e) => {
   e.preventDefault();
   if (!$("stage2").classList.contains("show")) { $("findProBtn").click(); return; }
   if (!validate()) return;
-  const btn = $("stage2").querySelector('button[type="submit"]');
-  btn.disabled = true; btn.textContent = "On it...";
 
   const req = buildRequest();
-  const teamsPayload = buildTeamsPayload(req);
   track("request_form_submitted", { service: req.service, zip: req.zip, total: req.quote.total });
 
-  let posted = false;
-  if (CONFIG.webhookUrl) {
-    let status = 0;
-    try {
-      /* The *.powerplatform.com trigger endpoint answers CORS preflight,
-         so the browser sends real JSON. 202 means Power Automate accepted
-         the request; flow run history holds any downstream failures. */
-      const res = await fetch(CONFIG.webhookUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(teamsPayload)
-      });
-      status = res.status;
-      posted = res.ok;
-    } catch (err) {
-      console.error("Webhook post failed:", err);
-    }
-    track("request_post_result", { ok: posted, status: status });
-    if (!posted) {
-      showError(null, "submitErr");
-      btn.disabled = false; btn.textContent = "Send my request";
-      return;
-    }
-    clearError(null, "submitErr");
-  }
-
   /* Queue demo wiring: the Pro queue wireframe on this same origin reads
-     this list (localStorage bridge, per-browser). The Teams webhook above
-     remains the real intake; this feeds the concept demo only. */
+     this list (localStorage bridge, per-browser). No external posting -
+     this demo is decoupled from the production webhook. */
   try {
     const QKEY = "yourgi-queue-requests";
     const qlist = JSON.parse(localStorage.getItem(QKEY) || "[]");
@@ -872,12 +781,11 @@ $("reqForm").addEventListener("submit", async (e) => {
   $("confirmPhone").textContent = req.contact.phone;
   $("reqId").textContent = "Request " + req.requestId;
   $("reqQuote").textContent = "Estimate $" + req.quote.total;
-  $("demoNote").style.display = CONFIG.webhookUrl ? "none" : "";
-  $("previewJson").textContent = JSON.stringify(teamsPayload, null, 2);
+  $("demoNote").style.display = "";
+  $("previewJson").textContent = JSON.stringify(req, null, 2);
   $("preview").classList.add("show");
   window.scrollTo({ top: 0, behavior: prefersReducedMotion ? "auto" : "smooth" });
   $("confirmTitle").focus();
-  btn.disabled = false; btn.textContent = "Send my request";
 });
 
 $("againBtn").addEventListener("click", () => {
@@ -888,7 +796,7 @@ $("againBtn").addEventListener("click", () => {
   $("zip").focus();
 });
 
-track("quote_viewed", { webhookConfigured: !!CONFIG.webhookUrl });
+track("quote_viewed", {});
 renderQuote();
 </script>
 </body>

@@ -1,19 +1,19 @@
-# Yourgi Pro Request Form (prototype)
+# Yourgi Pro Request Form (concept demo)
 
-Internal prototype: a branded public form where pet parents request a Yourgi Pro service
-(Boarding, Daycare, Dog Walking, House Sitting). Submissions post an Adaptive Card to the
-concierge Teams channel; the concierge replies via Send Blue. KPI: M1 Booking Conversion Rate.
+Concept demo for the flat-rate concierge experiment: a branded "Get a Price" request form
+and a Pro request queue board, wired together as a same-origin demo.
 
-- Live form: https://jeff-winters-destpet.github.io/yourgi-pro-request-form/
-- Wiring: see `docs/Teams wiring guide.md`
+**Decoupled from production (2026-08-06).** This repo does not interface with the production
+webhook, Power Automate flow, or Teams channel in any way. Form submissions here feed only
+the queue board demo in your own browser (localStorage); nothing is sent anywhere.
 
-**Never commit a webhook URL to this repo.** Pass it at runtime instead:
-`index.html?webhook=<power-automate-url>` (only `*.logic.azure.com` / `*.powerplatform.com` HTTPS URLs are accepted).
+- Form: https://jeff-winters-destpet.github.io/yourgi-pro-request-form/
+- Pro queue board: https://jeff-winters-destpet.github.io/yourgi-pro-request-form/wireframes/pro-queue.html
+- Landing page wireframe: https://jeff-winters-destpet.github.io/yourgi-pro-request-form/wireframes/concierge-landing-page.html
 
-Every submitter is anonymous; the phone number is the match key, and the lookup against
-pet parent data happens after submit.
+Demo script: open the form and the board in two tabs of the same browser, submit a request,
+and watch it land in New Requests with a mock push notification. Claim it as one Pro, switch
+identities, and see the card locked. Accepting reveals contact info and writes the mock booking.
 
-## Wireframes
-
-- [Concierge landing page (low-fi replica)](https://jeff-winters-destpet.github.io/yourgi-pro-request-form/wireframes/concierge-landing-page.html)
-- [Pro request queue concept (interactive kanban)](https://jeff-winters-destpet.github.io/yourgi-pro-request-form/wireframes/pro-queue.html)
+Docs in `docs/`: the PRD of record (July 29 project context), test plan, and test results.
+The production wiring guide lives with the production project, not here.

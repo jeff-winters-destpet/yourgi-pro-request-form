@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wireframe: Concierge Landing Page (Best Care Guarantee)</title>
+<style>
+:root { --ink:#444; --line:#9a9a9a; --soft:#e9e9e9; --tag:#b3b3b3; }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,'Segoe UI',sans-serif; color:var(--ink); background:#fff; line-height:1.4; }
+.wf { max-width:860px; margin:0 auto; padding:0 16px; }
+section, header.site, footer.site { position:relative; border:1.5px dashed var(--line); border-radius:6px; margin:14px auto; padding:22px 20px; max-width:860px; }
+.tag { position:absolute; top:-9px; left:12px; background:#fff; padding:0 6px; font-size:10px; letter-spacing:.12em; color:var(--tag); text-transform:uppercase; }
+h1 { font-size:34px; line-height:1.05; }
+h2 { font-size:22px; margin-bottom:12px; }
+.muted { color:#888; font-size:13px; }
+.box { border:1.5px solid var(--line); border-radius:6px; background:#fff; }
+.ph { background:repeating-linear-gradient(45deg,#f4f4f4,#f4f4f4 8px,#fbfbfb 8px,#fbfbfb 16px); border:1.5px solid var(--line); border-radius:6px; display:flex; align-items:center; justify-content:center; color:#aaa; font-size:12px; }
+button { font:inherit; cursor:pointer; }
+
+/* header */
+header.site { display:flex; align-items:center; justify-content:space-between; padding:14px 20px; }
+.logo { border:1.5px solid var(--line); border-radius:4px; padding:6px 14px; font-size:13px; color:#888; }
+
+/* hero grid */
+.hero-grid { display:grid; grid-template-columns:1fr; gap:22px; }
+@media(min-width:760px){ .hero-grid { grid-template-columns:1fr 1.1fr; align-items:start; } }
+.hero-copy p { margin-top:10px; max-width:26em; }
+
+/* quote card */
+.qcard { border:2px solid var(--ink); border-radius:8px; padding:16px; background:#fff; }
+.qcard h3 { font-size:15px; margin-bottom:10px; }
+.svc { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px; }
+@media(min-width:560px){ .svc { grid-template-columns:repeat(4,1fr); } }
+.svc button { border:1.5px solid var(--line); border-radius:6px; background:#fff; padding:10px 4px; font-size:12px; display:flex; flex-direction:column; align-items:center; gap:6px; color:var(--ink); }
+.svc button .ico { width:26px; height:26px; border-radius:50%; border:1.5px solid var(--line); background:var(--soft); }
+.svc button[aria-pressed="true"] { border:2px solid var(--ink); background:var(--soft); }
+.frow { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
+.frow label, .cfield label { display:block; font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:#888; margin-bottom:4px; }
+.fld { border:1.5px solid var(--line); border-radius:6px; padding:9px 10px; font-size:14px; width:100%; background:#fff; color:var(--ink); }
+.stepper { display:flex; border:1.5px solid var(--line); border-radius:6px; overflow:hidden; }
+.stepper button { flex:0 0 36px; border:0; background:#fff; font-size:16px; }
+.stepper span { flex:1; text-align:center; padding:9px 0; font-size:14px; }
+.total { display:flex; justify-content:space-between; align-items:baseline; margin:12px 0 2px; }
+.total b { font-size:28px; }
+.breakdown { font-size:11.5px; color:#999; margin-bottom:12px; }
+.contact { display:grid; grid-template-columns:1fr; gap:10px; margin-bottom:12px; }
+@media(min-width:560px){ .contact { grid-template-columns:1fr 1fr 1fr; } }
+.cta { width:100%; border:0; background:var(--ink); color:#fff; border-radius:6px; padding:13px; font-size:14px; letter-spacing:.08em; text-transform:uppercase; }
+.fine { font-size:11px; color:#999; text-align:center; margin-top:8px; }
+
+/* trust pillars */
+.pillars { display:grid; grid-template-columns:1fr; gap:14px; margin-top:14px; }
+@media(min-width:700px){ .pillars { grid-template-columns:1fr 1fr 1fr; } }
+.pillar { border:1.5px solid var(--line); border-radius:6px; padding:14px; }
+.pillar .ph { height:54px; width:54px; border-radius:50%; margin-bottom:10px; }
+.pillar h3 { font-size:14px; margin-bottom:6px; }
+.pillar p { font-size:12.5px; color:#888; }
+
+/* reviews */
+.reviews { display:grid; grid-template-columns:1fr; gap:12px; margin-top:12px; }
+@media(min-width:700px){ .reviews { grid-template-columns:1fr 1fr 1fr; } }
+.review { border:1.5px solid var(--line); border-radius:6px; padding:12px; font-size:12.5px; color:#777; }
+.review .stars { letter-spacing:2px; color:#aaa; margin-bottom:6px; }
+.review .who { margin-top:8px; font-size:11px; color:#999; }
+
+/* cross-sell */
+.xsell { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:12px; }
+@media(min-width:700px){ .xsell { grid-template-columns:repeat(4,1fr); } }
+.xsell .ph { height:70px; }
+
+/* footer */
+footer.site { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; font-size:12px; color:#999; }
+footer.site h4 { font-size:12px; color:#777; margin-bottom:6px; }
+
+/* states demo strip */
+.states { display:grid; grid-template-columns:1fr; gap:12px; margin-top:12px; }
+@media(min-width:700px){ .states { grid-template-columns:1fr 1fr; } }
+.state { border:1.5px solid var(--line); border-radius:6px; padding:14px; font-size:12.5px; color:#777; }
+.state b { display:block; font-size:14px; color:var(--ink); margin-bottom:6px; }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <span class="tag">Header</span>
+  <span class="logo">[ LOGO ]</span>
+  <span class="muted">Book now →</span>
+</header>
+
+<section>
+  <span class="tag">Hero + Quote Card (the concept: price before contact, no browsing)</span>
+  <div class="hero-grid">
+    <div class="hero-copy">
+      <h1>One flat price.</h1>
+      <p class="muted">No scrolling, no surprises. Tell us what your pet needs and a real person reaches out to match you with the right Pro.</p>
+      <p class="muted" style="margin-top:16px">[ guarantee badge ]</p>
+    </div>
+
+    <div class="qcard">
+      <h3>What does your pet need?</h3>
+      <div class="svc" id="svc">
+        <button aria-pressed="true" data-r="50" data-u="nights"><span class="ico"></span>Boarding</button>
+        <button aria-pressed="false" data-r="40" data-u="days"><span class="ico"></span>Daycare</button>
+        <button aria-pressed="false" data-r="50" data-u="nights"><span class="ico"></span>House Sitting</button>
+        <button aria-pressed="false" data-r="20" data-u="walks"><span class="ico"></span>Dog Walking</button>
+      </div>
+      <div class="frow">
+        <div><label>Dates</label><input class="fld" value="Aug 10 – Aug 13" readonly></div>
+        <div><label>Pets</label>
+          <div class="stepper"><button id="pm">−</button><span id="pv">2</span><button id="pp">+</button></div>
+        </div>
+      </div>
+      <div class="total"><span class="muted">Estimated total</span><b id="total">$315</b></div>
+      <div class="breakdown" id="breakdown">3 nights x 2 pets x $50 + 5% service fee</div>
+      <div class="contact">
+        <div class="cfield"><label>ZIP</label><input class="fld" placeholder="80202"></div>
+        <div class="cfield"><label>Phone</label><input class="fld" placeholder="(303) 555-0142"></div>
+        <div class="cfield"><label>Email</label><input class="fld" placeholder="you@email.com"></div>
+      </div>
+      <button class="cta">Find my Pro</button>
+      <p class="fine">By submitting, you agree Yourgi may text you about this request.</p>
+      <p class="fine">Coupons don't apply to this flat-rate offer.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <span class="tag">Trust / Guarantee</span>
+  <h2>We've got your back. Every booking.</h2>
+  <div class="pillars">
+    <div class="pillar"><div class="ph">img</div><h3>We make it right. Period.</h3><p>Guarantee copy. If anything falls short, credit toward the next booking.</p></div>
+    <div class="pillar"><div class="ph">img</div><h3>Pros worth trusting with your pet.</h3><p>Every Pro vetted before they meet your pet.</p></div>
+    <div class="pillar"><div class="ph">img</div><h3>The right Pro finds you.</h3><p>Not the other way around. A human matches, you relax.</p></div>
+  </div>
+</section>
+
+<section>
+  <span class="tag">Social proof</span>
+  <h2>Reviews from happy pet parents</h2>
+  <div class="reviews">
+    <div class="review"><div class="stars">★★★★★</div>Short quote about great care and easy booking.<div class="who">— K. S</div></div>
+    <div class="review"><div class="stars">★★★★★</div>Short quote about the sitter and updates.<div class="who">— Natalie D</div></div>
+    <div class="review"><div class="stars">★★★★★</div>Short quote about trust and coming back.<div class="who">— Sarah N</div></div>
+  </div>
+</section>
+
+<section>
+  <span class="tag">Cross-sell</span>
+  <h2>Other pet services in your neighborhood</h2>
+  <div class="xsell">
+    <div class="ph">service card</div><div class="ph">service card</div><div class="ph">service card</div><div class="ph">service card</div>
+  </div>
+</section>
+
+<section>
+  <span class="tag">Post-submit states (not simultaneously visible on the real page)</span>
+  <div class="states">
+    <div class="state"><b>Confirmation</b>Got it. A real person will text you to lock in your booking (n nights, n pets, about $X). Usually within an hour, 8am–8pm MT. Overnight? First thing tomorrow.</div>
+    <div class="state"><b>Out of market</b>We're not there yet. Names the covered markets. [Currently promises "leave your info" with no capture — open issue D4]</div>
+  </div>
+</section>
+
+<footer class="site">
+  <span class="tag">Footer</span>
+  <div><h4>About Yourgi</h4>Links...</div>
+  <div><h4>Support</h4>Links...</div>
+  <div><h4>[ legal / fine print ]</h4>Guarantee terms, privacy.</div>
+</footer>
+
+<script>
+/* Just enough interactivity to demo the concept: live flat-rate quote */
+var pets = 2, nights = 3, rate = 50, unit = 'nights';
+function render() {
+  document.getElementById('pv').textContent = pets;
+  var total = Math.round(rate * nights * pets * 1.05);
+  document.getElementById('total').textContent = '$' + total.toLocaleString();
+  document.getElementById('breakdown').textContent =
+    nights + ' ' + (nights === 1 ? unit.replace(/s$/, '') : unit) + ' x ' + pets + ' pet' + (pets > 1 ? 's' : '') + ' x $' + rate + ' + 5% service fee';
+}
+document.querySelectorAll('#svc button').forEach(function (b) {
+  b.addEventListener('click', function () {
+    document.querySelectorAll('#svc button').forEach(function (x) { x.setAttribute('aria-pressed', 'false'); });
+    b.setAttribute('aria-pressed', 'true');
+    rate = +b.dataset.r; unit = b.dataset.u; render();
+  });
+});
+document.getElementById('pm').onclick = function () { if (pets > 1) { pets--; render(); } };
+document.getElementById('pp').onclick = function () { if (pets < 8) { pets++; render(); } };
+render();
+</script>
+</body>
+</html>

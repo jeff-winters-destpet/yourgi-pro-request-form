@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wireframe: Pro Request Queue (concept)</title>
+<style>
+:root { --ink:#444; --line:#9a9a9a; --soft:#ececec; --tag:#b3b3b3; }
+* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:-apple-system,'Segoe UI',sans-serif; color:var(--ink); background:#fff; line-height:1.35; padding:14px; }
+h1 { font-size:20px; }
+.muted { color:#999; font-size:12px; }
+button { font:inherit; cursor:pointer; }
+
+.topbar { display:flex; align-items:center; gap:14px; flex-wrap:wrap; border:1.5px dashed var(--line); border-radius:6px; padding:12px 14px; position:relative; margin-bottom:14px; }
+.tag { position:absolute; top:-9px; left:12px; background:#fff; padding:0 6px; font-size:10px; letter-spacing:.12em; color:var(--tag); text-transform:uppercase; }
+.who { display:flex; gap:6px; align-items:center; margin-left:auto; }
+.who button { border:1.5px solid var(--line); background:#fff; border-radius:999px; padding:5px 12px; font-size:12px; }
+.who button[aria-pressed="true"] { border:2px solid var(--ink); background:var(--soft); font-weight:600; }
+.sim { border:1.5px solid var(--line); background:#fff; border-radius:6px; padding:6px 10px; font-size:12px; }
+
+.layout { display:grid; grid-template-columns:1fr; gap:14px; }
+@media(min-width:980px){ .layout { grid-template-columns:3fr 1fr; } }
+
+.board { display:grid; grid-template-columns:1fr; gap:12px; }
+@media(min-width:700px){ .board { grid-template-columns:1fr 1fr 1fr; } }
+.col { border:1.5px dashed var(--line); border-radius:6px; padding:14px 10px 10px; position:relative; min-height:340px; }
+.col h2 { font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:#777; margin-bottom:10px; display:flex; justify-content:space-between; }
+.col h2 .n { background:var(--soft); border-radius:999px; padding:0 8px; font-size:12px; }
+
+.card { border:1.5px solid var(--line); border-radius:6px; background:#fff; padding:10px; margin-bottom:10px; font-size:12.5px; }
+.card .rid { font-size:10.5px; color:#999; letter-spacing:.06em; display:flex; justify-content:space-between; }
+.card .svc { font-weight:700; font-size:14px; margin:2px 0; }
+.card .meta { color:#777; }
+.card .quote { margin-top:5px; font-weight:700; font-size:15px; }
+.card .contact { margin-top:5px; font-size:11.5px; color:#999; }
+.card .lockline { margin-top:6px; font-size:11px; color:#999; border-top:1px dashed #ddd; padding-top:6px; }
+.card .actions { display:flex; gap:6px; margin-top:8px; }
+.card .actions button { flex:1; border:1.5px solid var(--ink); background:#fff; border-radius:5px; padding:6px 4px; font-size:11.5px; }
+.card .actions button.primary { background:var(--ink); color:#fff; }
+.card.locked { opacity:.55; background:repeating-linear-gradient(45deg,#fafafa,#fafafa 8px,#fff 8px,#fff 16px); }
+.card.mine { border-width:2px; border-color:var(--ink); }
+.owner { display:inline-block; border:1px solid var(--line); border-radius:999px; padding:0 7px; font-size:10.5px; color:#777; }
+
+.rail { border:1.5px dashed var(--line); border-radius:6px; padding:14px 10px 10px; position:relative; }
+.rail h2 { font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:#777; margin-bottom:4px; }
+.rail .sub { font-size:11px; color:#aaa; margin-bottom:10px; }
+.booking { border:1.5px solid var(--line); border-radius:6px; padding:9px; margin-bottom:8px; font-size:12px; }
+.booking b { display:block; font-size:13px; }
+.booking .muted { font-size:11px; }
+.empty { color:#bbb; font-size:12px; padding:16px 6px; text-align:center; }
+
+.notes { border:1.5px dashed var(--line); border-radius:6px; padding:14px; position:relative; margin-top:14px; font-size:12.5px; color:#777; }
+.notes ul { margin-left:18px; }
+.notes li { margin-bottom:4px; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="tag">Pro-facing queue (in the Pro app / portal)</span>
+  <div>
+    <h1>Open requests near you</h1>
+    <span class="muted">Flat-rate requests from the concierge form. Claim what fits your schedule.</span>
+  </div>
+  <div class="who">
+    <span class="muted">Viewing as:</span>
+    <button id="proA" aria-pressed="true">Wulff Pack Pet Sitting</button>
+    <button id="proB" aria-pressed="false">Travelin' Tails</button>
+    <button class="sim" id="sim">+ Simulate new form request</button>
+  </div>
+</div>
+
+<div class="layout">
+  <div class="board">
+    <div class="col" id="col-new">
+      <h2>New Requests <span class="n" id="n-new">0</span></h2>
+      <div id="list-new"></div>
+    </div>
+    <div class="col" id="col-rev">
+      <h2>Reviewing <span class="n" id="n-rev">0</span></h2>
+      <div id="list-rev"></div>
+    </div>
+    <div class="col" id="col-acc">
+      <h2>Accepted <span class="n" id="n-acc">0</span></h2>
+      <div id="list-acc"></div>
+    </div>
+  </div>
+
+  <div class="rail">
+    <h2>Pro app: Bookings</h2>
+    <div class="sub" id="railWho">Wulff Pack Pet Sitting's list (mock of the existing bookings screen)</div>
+    <div id="bookings"></div>
+  </div>
+</div>
+
+<div class="notes">
+  <span class="tag">Mechanics this concept assumes (annotations, not UI)</span>
+  <ul>
+    <li><b>Matched notifications:</b> when a request lands, Pros who match it (service offered, coverage area, availability) get a push notification and come check the board. The board itself is the shared source of truth; the notification is just the doorbell.</li>
+    <li><b>Exclusive claim:</b> pulling a card to Reviewing locks it to that Pro. Others see it grayed with the owner's name. (Server enforces the race: first claim wins.)</li>
+    <li><b>Claims expire:</b> a claimed card auto-releases back to New Requests after 24h so requests don't rot in Reviewing. Shown on each claimed card.</li>
+    <li><b>Contact gating:</b> the parent's phone/email stay masked until Accepted. Reviewing-stage communication happens through the platform (or concierge relay), which also protects the flat rate from off-platform deals.</li>
+    <li><b>Accepted = booked:</b> accepting writes the appointment to the Pro's bookings list (right rail) at the quoted flat rate, and notifies the parent.</li>
+    <li><b>Escalation:</b> cards aging past a threshold with no claim get flagged to the concierge team (today's Teams channel keeps working as the fallback + audit log).</li>
+  </ul>
+</div>
+
+<script>
+var PROS = { A: "Wulff Pack Pet Sitting", B: "Travelin' Tails" };
+var me = 'A';
+var seq = 8;
+var cards = [
+  { id:'YRQ-8842', svc:'Boarding', dates:'Aug 10 - Aug 13', pets:2, market:'Denver 80227', quote:'$315', age:'2h ago', status:'new', owner:null },
+  { id:'YRQ-8836', svc:'Dog Walking', dates:'Aug 5, mornings', pets:1, market:'Denver 80211', quote:'$21', age:'4h ago', status:'new', owner:null },
+  { id:'YRQ-8829', svc:'House Sitting', dates:'Aug 15 - Aug 18', pets:3, market:'Lakewood 80227', quote:'$473', age:'6h ago', status:'new', owner:null },
+  { id:'YRQ-8815', svc:'Daycare', dates:'Aug 6', pets:1, market:'Denver 80202', quote:'$42', age:'1d ago', status:'rev', owner:'B' },
+  { id:'YRQ-8801', svc:'Boarding', dates:'Aug 2 - Aug 4', pets:1, market:'Denver 80209', quote:'$105', age:'2d ago', status:'acc', owner:'A' }
+];
+var SVCS = ['Boarding','Daycare','Dog Walking','House Sitting'];
+var $ = function(id){ return document.getElementById(id); };
+
+function cardHtml(c) {
+  var mine = c.owner === me;
+  var cls = 'card' + (c.status !== 'new' ? (mine ? ' mine' : ' locked') : '');
+  var h = '<div class="' + cls + '">';
+  h += '<div class="rid"><span>' + c.id + '</span><span>' + c.age + '</span></div>';
+  h += '<div class="svc">' + c.svc + ' &middot; ' + c.quote + '</div>';
+  h += '<div class="meta">' + c.dates + ' &middot; ' + c.pets + ' pet' + (c.pets > 1 ? 's' : '') + ' &middot; ' + c.market + '</div>';
+  h += '<div class="contact">' + (c.status === 'acc' && mine ? 'Parent: (720) 555-0142 &middot; unlocked on accept' : 'Parent contact: masked until accepted') + '</div>';
+  if (c.status === 'rev') {
+    h += '<div class="lockline">' + (mine ? 'Claimed by you &middot; auto-releases in 24h' : 'Claimed by ' + PROS[c.owner] + ' &middot; <span class="owner">locked</span>') + '</div>';
+  }
+  if (c.status === 'acc') {
+    h += '<div class="lockline">Booked by ' + (mine ? 'you' : PROS[c.owner]) + ' at the quoted flat rate</div>';
+  }
+  if (c.status === 'new') {
+    h += '<div class="actions"><button class="primary" onclick="claim(\'' + c.id + '\')">Claim &rarr; Reviewing</button></div>';
+  } else if (c.status === 'rev' && mine) {
+    h += '<div class="actions"><button onclick="release(\'' + c.id + '\')">&larr; Release</button><button class="primary" onclick="accept(\'' + c.id + '\')">Accept booking &rarr;</button></div>';
+  }
+  return h + '</div>';
+}
+
+function render() {
+  var lists = { new:'', rev:'', acc:'' }, counts = { new:0, rev:0, acc:0 };
+  cards.forEach(function(c){ lists[c.status] += cardHtml(c); counts[c.status]++; });
+  $('list-new').innerHTML = lists.new || '<div class="empty">No open requests</div>';
+  $('list-rev').innerHTML = lists.rev || '<div class="empty">Nothing in review</div>';
+  $('list-acc').innerHTML = lists.acc || '<div class="empty">Nothing accepted yet</div>';
+  $('n-new').textContent = counts.new; $('n-rev').textContent = counts.rev; $('n-acc').textContent = counts.acc;
+  var mine = cards.filter(function(c){ return c.status === 'acc' && c.owner === me; });
+  $('bookings').innerHTML = mine.length
+    ? mine.map(function(c){ return '<div class="booking"><b>' + c.svc + ' &middot; ' + c.quote + '</b>' + c.dates + '<div class="muted">' + c.market + ' &middot; from concierge queue &middot; ' + c.id + '</div></div>'; }).join('')
+    : '<div class="empty">Accepted requests appear here as appointments</div>';
+  $('railWho').textContent = PROS[me] + "'s list (mock of the existing bookings screen)";
+}
+
+window.claim = function(id){ var c = cards.find(function(x){ return x.id === id; }); c.status = 'rev'; c.owner = me; render(); };
+window.release = function(id){ var c = cards.find(function(x){ return x.id === id; }); c.status = 'new'; c.owner = null; render(); };
+window.accept = function(id){ var c = cards.find(function(x){ return x.id === id; }); c.status = 'acc'; render(); };
+
+$('proA').onclick = function(){ me = 'A'; $('proA').setAttribute('aria-pressed','true'); $('proB').setAttribute('aria-pressed','false'); render(); };
+$('proB').onclick = function(){ me = 'B'; $('proB').setAttribute('aria-pressed','true'); $('proA').setAttribute('aria-pressed','false'); render(); };
+$('sim').onclick = function(){
+  seq++;
+  var svc = SVCS[seq % 4];
+  cards.unshift({ id:'YRQ-88' + (50 + seq), svc:svc, dates:'Aug ' + (10 + seq % 15), pets:1 + seq % 3,
+    market:'Denver 802' + (10 + seq % 20), quote:'$' + (40 + (seq * 37) % 400), age:'just now', status:'new', owner:null });
+  render();
+  toast('Push sent to ' + (3 + seq % 4) + ' matching Pros: new ' + svc.toLowerCase() + ' request in Denver');
+};
+
+/* Notification concept: matched Pros get a push when a request lands */
+function toast(msg){
+  var t = document.createElement('div');
+  t.textContent = '[push notification] ' + msg;
+  t.style.cssText = 'position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#444;color:#fff;' +
+    'font-size:12.5px;padding:10px 16px;border-radius:6px;box-shadow:0 3px 10px rgba(0,0,0,.25);z-index:99;max-width:92vw;';
+  document.body.appendChild(t);
+  setTimeout(function(){ t.remove(); }, 3200);
+}
+render();
+</script>
+</body>
+</html>

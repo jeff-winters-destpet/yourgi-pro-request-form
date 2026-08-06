@@ -31,7 +31,20 @@ button { font:inherit; cursor:pointer; }
 .card { border:1.5px solid var(--line); border-radius:6px; background:#fff; padding:10px; margin-bottom:10px; font-size:12.5px; }
 .card .rid { font-size:10.5px; color:#999; letter-spacing:.06em; display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
 .card .cust-name { font-size:13.5px; color:var(--ink); letter-spacing:normal; white-space:nowrap; }
-.card .expiry { font-size:11.5px; font-weight:700; color:#c0392b; margin-bottom:4px; }
+.card .expiry { font-size:11.5px; font-weight:700; color:#777; margin-bottom:4px; }
+.card .expiry.urgent { color:#c0392b; }
+
+/* ===== Race / gamification ===== */
+.card .race { border:1.5px solid var(--ink); border-radius:5px; padding:6px 8px; margin:6px 0 2px; font-size:11.5px; background:#f7f7f7; }
+.card .race b { font-size:11.5px; letter-spacing:.04em; }
+.card .race .rank { display:inline-block; border:1.5px solid var(--ink); border-radius:999px; padding:0 7px; font-weight:700; font-size:10.5px; margin-left:4px; background:#fff; }
+.card .race .rival { display:block; color:#777; margin-top:3px; font-size:11px; }
+.card .race.leading { background:#eef4ee; }
+.card .won { color:var(--ink); font-weight:700; }
+.card .lost { color:#999; }
+.scoreboard { display:flex; gap:16px; flex-wrap:wrap; align-items:center; font-size:12px; color:#777; }
+.scoreboard .stat b { color:var(--ink); font-size:14px; }
+.scoreboard .streak { border:1.5px solid var(--ink); border-radius:999px; padding:1px 9px; font-weight:700; font-size:11px; color:var(--ink); }
 .card .svc { font-weight:700; font-size:14px; margin:2px 0; }
 .card .meta { color:#777; }
 .card .quote { margin-top:5px; font-weight:700; font-size:15px; }
@@ -80,6 +93,12 @@ button { font:inherit; cursor:pointer; }
 .m-card .sub { font-size:11.5px; color:#999; }
 .m-map { height:120px; border:1.5px solid var(--line); border-radius:6px; background:repeating-linear-gradient(45deg,#f4f4f4,#f4f4f4 8px,#fbfbfb 8px,#fbfbfb 16px); display:flex; align-items:center; justify-content:center; color:#aaa; font-size:12px; margin-bottom:8px; }
 .m-note { font-size:11px; color:#999; border-top:1px dashed #ddd; margin-top:10px; padding-top:8px; }
+.match-row { display:flex; align-items:center; gap:8px; padding:7px 0; border-bottom:1px dashed #e6e6e6; font-size:12.5px; }
+.match-row:last-of-type { border-bottom:0; }
+.match-row .nm { flex:1; min-width:90px; }
+.match-row .ph { color:#777; white-space:nowrap; }
+.match-row button { border:1.5px solid var(--ink); background:#fff; border-radius:5px; padding:4px 9px; font-size:11.5px; flex:0 0 auto; }
+.match-row button:hover { background:var(--ink); color:#fff; }
 
 .notes { border:1.5px dashed var(--line); border-radius:6px; padding:14px; position:relative; margin-top:14px; font-size:12.5px; color:#777; }
 .notes ul { margin-left:18px; }
@@ -125,7 +144,17 @@ button { font:inherit; cursor:pointer; }
     </button>
     <button class="acct-tile" data-key="C">
       <span class="avatar"></span>
-      <span class="info"><b>Yourgi Concierge</b><span>Internal ops &middot; sees the master queue</span></span>
+      <span class="info"><b>Priya Raman</b><span>Pro &middot; Boarding, Daycare, House Sitting</span></span>
+      <span class="go">Sign in &rarr;</span>
+    </button>
+    <button class="acct-tile" data-key="X">
+      <span class="avatar"></span>
+      <span class="info"><b>Tasha Boone</b><span>Yourgi Concierge &middot; rematches requests stalled over 2 hours</span></span>
+      <span class="go">Sign in &rarr;</span>
+    </button>
+    <button class="acct-tile" data-key="Y">
+      <span class="avatar"></span>
+      <span class="info"><b>Miguel Santos</b><span>Yourgi Concierge &middot; rematches requests stalled over 2 hours</span></span>
       <span class="go">Sign in &rarr;</span>
     </button>
   </div>
@@ -137,6 +166,7 @@ button { font:inherit; cursor:pointer; }
 <div class="board-top">
   <button id="switchUser">&larr; Switch user</button>
   <button class="sim" id="sim">+ Simulate new form request</button>
+  <button class="sim" id="advance" title="Demo aid: jumps every countdown forward so you can watch the routing lifecycle without waiting">&#9193; Advance 1 hour</button>
   <button class="sim" id="resetLive" title="Clears requests fed in from the form demo">Reset live cards</button>
 </div>
 
@@ -153,9 +183,14 @@ button { font:inherit; cursor:pointer; }
   <div class="muted" style="font-size:12.5px; width:100%; margin-top:6px">The requests in the New column align with your Services and Availability.</div>
 </div>
 
+<div class="topbar" id="scoreboardBar">
+  <span class="tag">Your race record</span>
+  <div class="scoreboard" id="scoreboard"></div>
+</div>
+
 <div class="board">
   <div class="col" id="col-new">
-    <h2>New Requests <span class="n" id="n-new">0</span></h2>
+    <h2><span id="col-new-title">New Requests</span> <span class="n" id="n-new">0</span></h2>
     <div class="muted" id="newFilterNote" style="margin:-6px 0 8px; font-size:11px"></div>
     <div id="list-new"></div>
   </div>
@@ -188,6 +223,7 @@ button { font:inherit; cursor:pointer; }
       </div>
       <button id="mDecline">I'm not available</button>
       <button class="primary" id="mAccept">Accept</button>
+      <div id="mReassign" style="display:none; gap:8px; flex-wrap:wrap"></div>
     </div>
 
     <div class="m-grid">
@@ -195,7 +231,8 @@ button { font:inherit; cursor:pointer; }
         <div class="m-card">
           <h3>Customer Profile</h3>
           <div class="row"><span class="dot"></span><span id="mCust">Pet parent</span><span class="chev">&rsaquo;</span></div>
-          <a class="link" href="#" onclick="return false">Message Customer</a>
+          <a class="link" id="mMsgLink" href="#" onclick="return false">Message Customer</a>
+          <span class="link" id="mMsgLocked" style="display:none; text-decoration:none; color:#aaa">Message Customer &middot; locked</span>
           <div class="m-note" id="mContactNote">Contact stays masked until you accept. Messaging goes through the platform.</div>
         </div>
         <div class="m-card">
@@ -221,6 +258,11 @@ button { font:inherit; cursor:pointer; }
           <div class="lab">Pets</div><div class="val" id="mPetCount"></div>
           <div class="lab">Parent pays (flat rate)</div><div class="val" id="mQuote"></div>
         </div>
+        <div class="m-card" id="mMatchWidget" style="display:none">
+          <h3>Yourgi Match Widget</h3>
+          <div id="mMatchRows"></div>
+          <div class="m-note">Next best matches who haven't passed on this request. Call them, then assign it to whoever says yes.</div>
+        </div>
       </div>
 
       <div>
@@ -241,71 +283,233 @@ button { font:inherit; cursor:pointer; }
 </div>
 
 <script>
-var PROS = { A: "Colette Jackson", B: "Alex Garcia" };
-var CONCIERGE_NAME = "Yourgi Concierge";
+/* The market roster. A, B and C are the demo logins; D-H are the rest
+   of the market - Pros the Concierge can call from the Match Widget but
+   whose boards we don't sign into in this demo. Order matters: the
+   Match tool walks this list top-down. */
+var PROS = {
+  A: "Colette Jackson", B: "Alex Garcia", C: "Priya Raman",
+  D: "Christian Wood", E: "William Brooks", F: "Reagan Rivera",
+  G: "Ronald Miller", H: "Gavin Nguyen"
+};
+var LOGIN_KEYS = ['A','B','C'];
+var PRO_PHONES = {
+  A:'(303) 555-0198', B:'(720) 555-0166', C:'(303) 555-0121',
+  D:'(303) 555-0147', E:'(720) 555-0183', F:'(303) 555-0129',
+  G:'(983) 555-0164', H:'(720) 555-0112'
+};
+/* Named Concierge agents. Requests being actively worked get stamped
+   with whoever picked them up, so two agents don't call the same Pros
+   for the same request. */
+var CONCIERGES = { X: "Tasha Boone", Y: "Miguel Santos" };
+function nameOf(k){ return PROS[k] || CONCIERGES[k] || k; }
 var me = 'A';
 var seq = 8;
 var SVCS = ['Boarding','Daycare','Dog Walking','House Sitting'];
 
-/* Services & Pricing settings per Pro. Filters what each Pro sees in
-   New Requests: must offer the service, be under weekly capacity
-   (active = Reviewing + Accepted), and be accepting new requests.
-   Concierge (role 'C') is exempt from all of this - master queue. */
+/* Services & Pricing settings per Pro. Set on the Services & Pricing
+   page (read-only here). The Yourgi Match tool uses these to pick who
+   a request fans out to, and to rank the Concierge's call list. */
 var PRO_SETTINGS = {
-  A: { services: { Boarding:true, Daycare:true, 'Dog Walking':true, 'House Sitting':true }, capacity: 3, acceptingNew: true },
-  B: { services: { Boarding:false, Daycare:true, 'Dog Walking':true, 'House Sitting':false }, capacity: 2, acceptingNew: true }
+  A: { services: { Boarding:true,  Daycare:true, 'Dog Walking':true,  'House Sitting':true  }, capacity: 3, acceptingNew: true },
+  B: { services: { Boarding:false, Daycare:true, 'Dog Walking':true,  'House Sitting':false }, capacity: 2, acceptingNew: true },
+  C: { services: { Boarding:true,  Daycare:true, 'Dog Walking':false, 'House Sitting':true  }, capacity: 3, acceptingNew: true },
+  D: { services: { Boarding:true,  Daycare:true, 'Dog Walking':true,  'House Sitting':true  }, capacity: 4, acceptingNew: true },
+  E: { services: { Boarding:true,  Daycare:true, 'Dog Walking':false, 'House Sitting':true  }, capacity: 2, acceptingNew: true },
+  F: { services: { Boarding:true,  Daycare:true, 'Dog Walking':true,  'House Sitting':false }, capacity: 3, acceptingNew: true },
+  G: { services: { Boarding:true,  Daycare:true, 'Dog Walking':false, 'House Sitting':true  }, capacity: 2, acceptingNew: true },
+  H: { services: { Boarding:true,  Daycare:true, 'Dog Walking':true,  'House Sitting':false }, capacity: 3, acceptingNew: true }
 };
 
 function activeCountFor(proKey) {
   return cards.filter(function(c){ return c.owner === proKey && (c.status === 'rev' || c.status === 'acc'); }).length;
 }
-/* Returns {ok, reason} - reason explains why a Pro can't see this request when ok is false. */
-function proVisibility(card, proKey) {
-  var s = PRO_SETTINGS[proKey];
-  if (!s.acceptingNew) return { ok:false, reason:'Paused - not accepting new requests' };
-  if (!s.services[card.svc]) return { ok:false, reason:"Doesn't offer " + card.svc };
-  var active = activeCountFor(proKey);
-  if (active >= s.capacity) return { ok:false, reason:'At capacity (' + active + '/' + s.capacity + ')' };
-  return { ok:true, reason:'Matches services & capacity (' + active + '/' + s.capacity + ')' };
+
+/* ===== Race record (gamification) =====
+   Seeded with plausible history; moves live as Pros win and lose races
+   during the demo. "Entered" counts every request that landed on your
+   board and got resolved by someone. */
+var PRO_STATS = {
+  A: { won: 6, entered: 9,  streak: 3 },
+  B: { won: 4, entered: 11, streak: 0 },
+  C: { won: 8, entered: 10, streak: 5 },
+  D: { won: 11, entered: 14, streak: 2 },
+  E: { won: 3,  entered: 7,  streak: 0 },
+  F: { won: 5,  entered: 8,  streak: 1 },
+  G: { won: 2,  entered: 6,  streak: 0 },
+  H: { won: 7,  entered: 12, streak: 1 }
+};
+function winRate(k){ var s = PRO_STATS[k]; return s.entered ? Math.round(s.won / s.entered * 100) : 0; }
+
+/* ===== Routing windows (placeholder SLAs, real durations TBD) =====
+   DIRECT: how long the parent's originally-requested Pro has before
+   the request auto-runs through the Match tool.
+   FANOUT: the 2-hour window the request sits on the matched Pros'
+   boards before Concierge picks it up for a manual rematch. */
+var DIRECT_WINDOW_MIN = 60;
+var FANOUT_WINDOW_MIN = 120;
+var FANOUT_SIZE = 3;
+
+/* The Yourgi Match tool: given a request, return the top N Pros who
+   offer the service, are accepting work, have capacity, and haven't
+   already passed on it. Real ranking would use proximity, rating,
+   history with this pet parent, etc. */
+function matchTool(c) {
+  var tried = {};
+  (c.history || []).forEach(function(h){ tried[h.pro] = true; });
+  return Object.keys(PROS).filter(function(k){
+    if (tried[k]) return false;
+    var s = PRO_SETTINGS[k];
+    return s.acceptingNew && s.services[c.svc] && activeCountFor(k) < s.capacity;
+  }).slice(0, FANOUT_SIZE);
+}
+/* Pro the parent originally asked for, when a request arrives without
+   explicit routing (live form submissions, simulated cards). */
+function pickOriginalPro(svc) {
+  var keys = Object.keys(PROS);
+  for (var i = 0; i < keys.length; i++) { if (PRO_SETTINGS[keys[i]].services[svc]) return keys[i]; }
+  return keys[0];
+}
+
+/* Fan a request out to the top matching Pros. If nobody matches, it
+   goes straight to Concierge instead of vanishing. */
+function fanOut(c, now) {
+  var top = matchTool(c);
+  if (!top.length) { toRematch(c, now); return; }
+  c.stage = 'matched';
+  c.status = 'new';
+  c.assignedTo = top;
+  c.owner = null;
+  /* Match rank drives the race framing: being told you're Yourgi's #1
+     match is the nudge to claim it before the others do. */
+  c.rank = {};
+  top.forEach(function(k, i){ c.rank[k] = i + 1; });
+  c.views = c.views || {};
+  c.expiresAt = now + FANOUT_WINDOW_MIN * 60000;
+}
+/* "Alex viewed this 4 minutes ago" - real rival activity, recorded when
+   a Pro opens the detail modal. */
+function agoText(ts) {
+  var mins = Math.max(0, Math.round((Date.now() - ts) / 60000));
+  if (mins < 1) return 'just now';
+  if (mins < 60) return mins + ' min ago';
+  return Math.round(mins / 60) + 'h ago';
+}
+function rivalActivity(c) {
+  return Object.keys(c.views || {})
+    .filter(function(k){ return k !== me && has(c, k); })
+    .map(function(k){ return PROS[k] + ' opened this ' + agoText(c.views[k]); });
+}
+/* Park a request in Concierge's Needs Rematched column. */
+function toRematch(c, now) {
+  c.status = 'rematch';
+  c.assignedTo = [];
+  c.owner = null;
+  c.escalatedAt = now;
+  c.expiresAt = null;
 }
 var NOW = Date.now();
 var cards = [
-  { id:'YRQ-8842', svc:'Boarding', dates:'Aug 10 - Aug 13', pets:2, market:'Denver 80227', quote:'$315', age:'2h ago', status:'new', owner:null,
+  /* DIRECT: the parent asked for Colette. Still hers alone, clock running. */
+  { id:'YRQ-8842', svc:'Boarding', dates:'Aug 10 - Aug 13', pets:2, market:'Denver 80227', quote:'$315', age:'2h ago',
+    stage:'direct', status:'new', originalPro:'A', assignedTo:['A'], owner:null, history:[],
     parent:'Jilli M.', petNames:'Caro (Dog, 6) and Miso (Dog, 3)', start:'Mon, Aug 10, 2026 - 9:00 AM', duration:'3 nights', street:'100 Evergreen Rd', area:'Wash Park, Denver 80227', submitted:'Today 1:34 PM',
-    expiresAt: NOW + 95*60000 },
-  { id:'YRQ-8836', svc:'Dog Walking', dates:'Aug 5, mornings', pets:1, market:'Denver 80211', quote:'$21', age:'4h ago', status:'new', owner:null,
-    parent:'Devon R.', petNames:'Pickle (Dog, 2)', start:'Wed, Aug 5, 2026 - 8:00 AM', duration:'30 minutes', street:'4212 Zuni St', area:'Sunnyside, Denver 80211', submitted:'Today 10:02 AM',
-    expiresAt: NOW + 47*60000 },
-  { id:'YRQ-8829', svc:'House Sitting', dates:'Aug 15 - Aug 18', pets:3, market:'Lakewood 80227', quote:'$473', age:'6h ago', status:'new', owner:null,
-    parent:'Andrea O.', petNames:'Biscuit (Dog, 8), Mo (Cat, 4), Juno (Cat, 1)', start:'Sat, Aug 15, 2026 - 4:00 PM', duration:'3 nights', street:'880 S Kipling St', area:'Lakewood 80227', submitted:'Today 7:41 AM',
-    expiresAt: NOW + 19*60000 },
-  { id:'YRQ-8815', svc:'Daycare', dates:'Aug 6', pets:1, market:'Denver 80202', quote:'$42', age:'1d ago', status:'rev', owner:'B',
-    parent:'Sam T.', petNames:'Waffle (Dog, 5)', start:'Thu, Aug 6, 2026 - 7:30 AM', duration:'Full day', street:'1801 Blake St', area:'LoDo, Denver 80202', submitted:'Yesterday 3:20 PM' },
-  { id:'YRQ-8801', svc:'Boarding', dates:'Aug 2 - Aug 4', pets:1, market:'Denver 80209', quote:'$105', age:'2d ago', status:'acc', owner:'A',
+    expiresAt: NOW + 38*60000 },
+
+  /* MATCHED: Devon asked for Alex, Alex declined. The Match tool fanned
+     it out - it's now on Colette's and Priya's boards at the same time,
+     inside the 2-hour window. Sign in as either to see the same card. */
+  { id:'YRQ-8836', svc:'Daycare', dates:'Aug 5', pets:1, market:'Denver 80211', quote:'$42', age:'4h ago',
+    stage:'matched', status:'new', originalPro:'B', assignedTo:['A','C'], owner:null,
+    rank:{ A:1, C:2 }, views:{ C: NOW - 4*60000 },
+    history:[ { pro:'B', reviewed:false, outcome:'declined' } ],
+    parent:'Devon R.', petNames:'Pickle (Dog, 2)', start:'Wed, Aug 5, 2026 - 8:00 AM', duration:'Full day', street:'4212 Zuni St', area:'Sunnyside, Denver 80211', submitted:'Today 10:02 AM',
+    expiresAt: NOW + 74*60000 },
+
+  /* NEEDS REMATCHED: fanned out to Colette and Priya, sat past the
+     2-hour window with no acceptance. Now Concierge's problem. */
+  { id:'YRQ-8788', svc:'Boarding', dates:'Aug 12 - Aug 14', pets:1, market:'Denver 80203', quote:'$110', age:'5h ago',
+    stage:'matched', status:'rematch', originalPro:'B', assignedTo:[], owner:null,
+    history:[ { pro:'B', reviewed:false, outcome:'declined' },
+              { pro:'A', reviewed:true,  outcome:'expired' },
+              { pro:'C', reviewed:false, outcome:'expired' } ],
+    escalatedAt: NOW - 55*60000,
+    parent:'Marcus T.', petNames:'Bruno (Dog, 3)', start:'Wed, Aug 12, 2026 - 12:00 PM', duration:'2 nights', street:'450 Pearl St', area:'Denver 80203', submitted:'Yesterday 9:15 AM' },
+
+  /* NEEDS REMATCHED: nobody left who offers House Sitting and has room -
+     an intentional dead-end so the "no untried Pro" path is visible. */
+  { id:'YRQ-8829', svc:'House Sitting', dates:'Aug 15 - Aug 18', pets:3, market:'Lakewood 80227', quote:'$473', age:'6h ago',
+    stage:'matched', status:'rematch', originalPro:'A', assignedTo:[], owner:null,
+    history:[ { pro:'A', reviewed:false, outcome:'declined' }, { pro:'C', reviewed:true, outcome:'declined' } ],
+    escalatedAt: NOW - 20*60000,
+    parent:'Andrea O.', petNames:'Biscuit (Dog, 8), Mo (Cat, 4), Juno (Cat, 1)', start:'Sat, Aug 15, 2026 - 4:00 PM', duration:'3 nights', street:'880 S Kipling St', area:'Lakewood 80227', submitted:'Today 7:41 AM' },
+
+  /* Claimed out of a fan-out: Alex is reviewing, Colette still has it
+     on her board showing as locked. */
+  { id:'YRQ-8815', svc:'Dog Walking', dates:'Aug 6', pets:1, market:'Denver 80202', quote:'$21', age:'1d ago',
+    stage:'matched', status:'rev', originalPro:'A', assignedTo:['A','B'], owner:'B',
+    rank:{ A:1, B:2 }, views:{ A: NOW - 26*60000, B: NOW - 31*60000 },
+    history:[], expiresAt: NOW + 90*60000,
+    parent:'Sam T.', petNames:'Waffle (Dog, 5)', start:'Thu, Aug 6, 2026 - 7:30 AM', duration:'30 minutes', street:'1801 Blake St', area:'LoDo, Denver 80202', submitted:'Yesterday 3:20 PM' },
+
+  { id:'YRQ-8801', svc:'Boarding', dates:'Aug 2 - Aug 4', pets:1, market:'Denver 80209', quote:'$105', age:'2d ago',
+    stage:'direct', status:'acc', originalPro:'A', assignedTo:['A'], owner:'A', history:[],
     parent:'Catherine G.', petNames:'Nugget (Dog, 4)', start:'Sun, Aug 2, 2026 - 10:00 AM', duration:'2 nights', street:'305 S Downing St', area:'Wash Park, Denver 80209', submitted:'2 days ago' }
 ];
 var $ = function(id){ return document.getElementById(id); };
-function isConcierge(){ return me === 'C'; }
+function isConcierge(){ return !!CONCIERGES[me]; }
 
 /* Time remaining before an unclaimed request expires. Placeholder SLA
    window - real duration TBD. Negative -> "Request expired" (still
-   claimable in this demo; a real build would escalate it). */
-function expiresInText(c) {
-  if (!c.expiresAt) return '';
+   claimable in this demo; a real build would escalate it). Only turns
+   red (urgent) under 30 minutes remaining; otherwise it's neutral. */
+function expiresInfo(c) {
+  if (!c.expiresAt) return null;
   var mins = Math.round((c.expiresAt - Date.now()) / 60000);
-  if (mins <= 0) return 'Request expired';
-  if (mins < 60) return 'Request expires in ' + mins + ' minute' + (mins === 1 ? '' : 's');
-  var h = Math.floor(mins / 60), m = mins % 60;
-  return 'Request expires in ' + h + 'h' + (m ? ' ' + m + 'm' : '');
+  var text;
+  if (mins <= 0) text = 'Request expired';
+  else if (mins < 60) text = 'Request expires in ' + mins + ' minute' + (mins === 1 ? '' : 's');
+  else { var h = Math.floor(mins / 60), m = mins % 60; text = 'Request expires in ' + h + 'h' + (m ? ' ' + m + 'm' : ''); }
+  return { text: text, urgent: mins < 30 };
+}
+
+function has(c, proKey){ return (c.assignedTo || []).indexOf(proKey) !== -1; }
+
+function outcomeLine(h) {
+  var who = PROS[h.pro];
+  if (h.outcome === 'declined') return who + (h.reviewed ? ' reviewed it, then declined' : ' declined without reviewing it');
+  return who + (h.reviewed ? ' reviewed it, then let the window close' : ' never responded before the window closed');
+}
+/* Card-level one-liner: how this request got where it is. */
+function routeSummary(c) {
+  if (c.stage === 'direct') return 'Requested directly by the pet parent';
+  var n = (c.history || []).length;
+  return 'Matched to you by Yourgi after ' + n + ' Pro' + (n === 1 ? '' : 's') + ' passed';
+}
+/* Yourgi Match Widget: the Concierge's call list. The next best matches
+   who haven't already passed on this request and aren't holding it now.
+   Concierge phones these Pros, and once one says yes, assigns the
+   request straight to them. Pros who already passed are not re-offered. */
+function matchWidgetRows(c) {
+  var out = {};
+  (c.history || []).forEach(function(h){ out[h.pro] = true; });
+  (c.assignedTo || []).forEach(function(k){ out[k] = true; });
+  return Object.keys(PROS).filter(function(k){
+    if (out[k]) return false;
+    var s = PRO_SETTINGS[k];
+    return s.acceptingNew && s.services[c.svc] && activeCountFor(k) < s.capacity;
+  }).slice(0, 5);
 }
 
 function cardHtml(c) {
   var mine = c.owner === me;
   var concierge = isConcierge();
-  var cls = 'card' + (c.status !== 'new' ? (mine ? ' mine' : ' locked') : '');
+  var takenByOther = c.owner && c.owner !== me;
+  var cls = 'card' + (c.status === 'rev' || c.status === 'acc' ? (mine ? ' mine' : ' locked') : '');
   var h = '<div class="' + cls + '" style="cursor:pointer" onclick="openDetail(\'' + c.id + '\')" title="Open request detail">';
-  if (c.status === 'new' && c.expiresAt) {
-    h += '<div class="expiry">' + expiresInText(c) + '</div>';
+  if ((c.status === 'new' || c.status === 'rev') && c.expiresAt) {
+    var exp = expiresInfo(c);
+    h += '<div class="expiry' + (exp.urgent ? ' urgent' : '') + '">' + exp.text + '</div>';
   }
   h += '<div class="rid"><b class="cust-name">' + (c.parent || 'A new pet parent') + '</b><span>' + c.id + ' &middot; ' + c.age + '</span></div>';
   h += '<div class="svc">' + c.svc + ' &middot; ' + c.quote + '</div>';
@@ -313,29 +517,71 @@ function cardHtml(c) {
   var revealed = (c.phone || '(720) 555-0142') + ' &middot; unlocked on accept';
   var contactUnlocked = (c.status === 'acc' && mine) || concierge;
   h += '<div class="contact">' + (contactUnlocked ? 'Parent: ' + revealed : 'Parent contact: masked until accepted') + '</div>';
-  if (concierge) h += '<div class="contact" style="color:#666">Concierge view &middot; always visible</div>';
   if (c.live) h += '<div class="contact" style="color:#666">&#9679; live from the request form</div>';
+
+  if (c.status === 'rematch') {
+    h += '<div class="lockline">Originally requested: ' + PROS[c.originalPro] + '</div>';
+    h += '<div class="lockline">Passed by ' + (c.history || []).length + ' Pro' + ((c.history || []).length === 1 ? '' : 's') + ' &middot; over the 2-hour window</div>';
+    if (c.conciergeOwner) {
+      h += '<div class="lockline">' + (c.conciergeOwner === me
+        ? '<span class="won">You\'re working this</span>' + (c.conciergeStartedAt ? ' &middot; picked up ' + agoText(c.conciergeStartedAt) : '')
+        : CONCIERGES[c.conciergeOwner] + ' is working this &middot; <span class="owner">assigned</span>') + '</div>';
+    }
+  } else if (c.status === 'new' && !concierge) {
+    h += '<div class="lockline">' + routeSummary(c) + '</div>';
+    /* The race: who else is holding this, where you rank, and what
+       your rivals have already done about it. */
+    var others = (c.assignedTo || []).filter(function(k){ return k !== me; }).length;
+    if (c.stage === 'matched' && others) {
+      var myRank = c.rank && c.rank[me];
+      var leading = myRank === 1;
+      h += '<div class="race' + (leading ? ' leading' : '') + '">' +
+        '<b>RACING ' + others + ' OTHER PRO' + (others === 1 ? '' : 'S') + '</b>' +
+        (myRank ? '<span class="rank">' + (leading ? "YOU'RE THE #1 MATCH" : '#' + myRank + ' MATCH') + '</span>' : '') +
+        '<span class="rival">First to accept gets the booking' +
+        (rivalActivity(c).length ? ' &middot; ' + rivalActivity(c).join(' &middot; ') : '') + '</span>' +
+        '</div>';
+    }
+  } else if ((c.status === 'new' || c.status === 'rev') && concierge) {
+    var names = (c.assignedTo || []).map(function(k){ return PROS[k]; }).join(', ');
+    h += '<div class="lockline">On the kanban of: ' + (names || 'nobody') + '</div>';
+  }
+
   if (c.status === 'rev') {
-    var revLine = mine ? 'Claimed by you &middot; auto-releases in 24h'
+    var revLine = mine ? '<span class="won">You got there first</span> &middot; accept before the window closes'
       : concierge ? 'Claimed by ' + PROS[c.owner] + ' &middot; <span class="owner">locked to them</span>'
-      : 'Claimed by another Pro &middot; <span class="owner">locked</span>';
+      : '<span class="lost">Another Pro claimed it first</span> &middot; <span class="owner">locked</span>';
     h += '<div class="lockline">' + revLine + '</div>';
   }
   if (c.status === 'acc') {
-    h += '<div class="lockline">Booked by ' + (mine ? 'you' : PROS[c.owner]) + ' at the quoted flat rate</div>';
+    h += '<div class="lockline">' + (mine
+      ? '<span class="won">You won this one</span>'
+      : concierge ? 'Booked by ' + PROS[c.owner]
+      : '<span class="lost">Another Pro won this one</span>') + '</div>';
   }
+
   if (c.status === 'new' && !concierge) {
-    h += '<div class="actions"><button class="primary" onclick="event.stopPropagation();claim(\'' + c.id + '\')">Claim &rarr; Reviewing</button></div>';
+    h += '<div class="actions"><button onclick="event.stopPropagation();decline(\'' + c.id + '\')">Decline</button><button class="primary" onclick="event.stopPropagation();claim(\'' + c.id + '\')">Claim &rarr; Reviewing</button></div>';
   } else if (c.status === 'rev' && mine) {
-    h += '<div class="actions"><button onclick="event.stopPropagation();release(\'' + c.id + '\')">&larr; Release</button><button class="primary" onclick="event.stopPropagation();accept(\'' + c.id + '\')">Accept booking &rarr;</button></div>';
-  } else if (c.status === 'rev' && concierge) {
-    h += '<div class="actions"><button onclick="event.stopPropagation();release(\'' + c.id + '\')">Force release &rarr; New</button></div>';
+    h += '<div class="actions"><button onclick="event.stopPropagation();decline(\'' + c.id + '\')">&larr; Release</button><button class="primary" onclick="event.stopPropagation();accept(\'' + c.id + '\')">Accept booking &rarr;</button></div>';
+  } else if (c.status === 'rematch' && concierge) {
+    /* Assignment happens in the detail view, after the Concierge has
+       actually called someone from the Match Widget. */
+    var n = matchWidgetRows(c).length;
+    if (!c.conciergeOwner) {
+      h += '<div class="actions"><button class="primary" onclick="event.stopPropagation();workThis(\'' + c.id + '\')">' +
+        (n ? "I'll work this &rarr; " + n + ' to call' : "I'll work this") + '</button></div>';
+    } else if (c.conciergeOwner === me) {
+      h += '<div class="actions"><button onclick="event.stopPropagation();handBack(\'' + c.id + '\')">Hand back</button>' +
+        '<button class="primary" onclick="event.stopPropagation();openDetail(\'' + c.id + '\')">' +
+        (n ? 'Call list &rarr; ' + n : 'Open request') + '</button></div>';
+    }
   }
   return h + '</div>';
 }
 
 function svcSettingsSummary() {
-  return Object.keys(PROS).map(function(k){
+  return LOGIN_KEYS.map(function(k){
     var s = PRO_SETTINGS[k];
     var offered = SVCS.filter(function(sv){ return s.services[sv]; });
     var active = activeCountFor(k);
@@ -344,38 +590,93 @@ function svcSettingsSummary() {
   }).join('<br>');
 }
 
+/* The automatic half of the routing lifecycle:
+   - a direct request the original Pro let lapse runs through the Match
+     tool and fans out to the top matching Pros;
+   - a fanned-out request nobody accepted inside the 2-hour window goes
+     to Concierge as Needs Rematched;
+   - a claimed request whose window closes without an accept does too. */
+function sweepWindows() {
+  var now = Date.now();
+  cards.forEach(function(c){
+    if (c.status === 'acc' || c.status === 'rematch') return;
+    if (!c.expiresAt || now <= c.expiresAt) return;
+    c.history = c.history || [];
+    if (c.status === 'rev') {
+      c.history.push({ pro: c.owner, reviewed: true, outcome: 'expired' });
+      toRematch(c, now);
+    } else if (c.stage === 'direct') {
+      (c.assignedTo || []).forEach(function(p){ c.history.push({ pro: p, reviewed: false, outcome: 'expired' }); });
+      fanOut(c, now);
+    } else {
+      (c.assignedTo || []).forEach(function(p){ c.history.push({ pro: p, reviewed: false, outcome: 'expired' }); });
+      toRematch(c, now);
+    }
+  });
+}
+
 function render() {
+  sweepWindows();
   var concierge = isConcierge();
-  var visibleNew = cards.filter(function(c){ return c.status === 'new'; });
-  var totalNew = visibleNew.length;
-  if (!concierge) visibleNew = visibleNew.filter(function(c){ return proVisibility(c, me).ok; });
-  /* Oldest (soonest-expiring) on top. */
-  visibleNew.sort(function(a, b){ return (a.expiresAt || Infinity) - (b.expiresAt || Infinity); });
 
-  var lists = { rev:'', acc:'' }, counts = { new: visibleNew.length, rev:0, acc:0 };
-  var newHtml = visibleNew.map(cardHtml).join('');
-  cards.forEach(function(c){ if (c.status !== 'new') { lists[c.status] += cardHtml(c); counts[c.status]++; } });
+  /* The Pro/Concierge split:
+     - A Pro's New Requests = whatever is on THEIR board right now,
+       whether the parent asked for them directly or the Match tool
+       fanned it to them after someone else passed.
+     - Concierge's Needs Rematched = only requests that sat on Pro
+       boards past the 2-hour window. Not the raw intake. */
+  var newCards, sortKey, revCards;
+  var relevant = function(c){ return concierge || has(c, me) || c.owner === me; };
+  if (concierge) {
+    /* Unclaimed stalled requests wait in Needs Rematched; once an agent
+       picks one up it moves to Reviewing under their name, alongside
+       requests Pros are actively reviewing. */
+    newCards = cards.filter(function(c){ return c.status === 'rematch' && !c.conciergeOwner; });
+    sortKey = function(c){ return c.escalatedAt || Infinity; };
+    revCards = cards.filter(function(c){ return c.status === 'rev' || (c.status === 'rematch' && c.conciergeOwner); });
+  } else {
+    newCards = cards.filter(function(c){ return c.status === 'new' && has(c, me); });
+    sortKey = function(c){ return c.expiresAt || Infinity; };
+    revCards = cards.filter(function(c){ return c.status === 'rev' && relevant(c); });
+  }
+  newCards.sort(function(a, b){ return sortKey(a) - sortKey(b); }); /* oldest first */
 
-  $('list-new').innerHTML = newHtml || '<div class="empty">No open requests</div>';
-  $('list-rev').innerHTML = lists.rev || '<div class="empty">Nothing in review</div>';
-  $('list-acc').innerHTML = lists.acc || '<div class="empty">Nothing accepted yet</div>';
-  $('n-new').textContent = counts.new; $('n-rev').textContent = counts.rev; $('n-acc').textContent = counts.acc;
+  var accCards = cards.filter(function(c){ return c.status === 'acc' && relevant(c); });
 
-  var hiddenCount = totalNew - visibleNew.length;
+  $('list-new').innerHTML = newCards.map(cardHtml).join('') || '<div class="empty">' + (concierge ? 'Nothing is stalled right now' : 'Nothing on your board') + '</div>';
+  $('list-rev').innerHTML = revCards.map(cardHtml).join('') || '<div class="empty">Nothing in review</div>';
+  $('list-acc').innerHTML = accCards.map(cardHtml).join('') || '<div class="empty">Nothing accepted yet</div>';
+  $('n-new').textContent = newCards.length; $('n-rev').textContent = revCards.length; $('n-acc').textContent = accCards.length;
+
+  $('col-new-title').textContent = concierge ? 'Needs Rematched' : 'New Requests';
   $('newFilterNote').textContent = concierge
-    ? (totalNew ? 'Master queue - all ' + totalNew + ' unfiltered' : '')
-    : (hiddenCount > 0 ? hiddenCount + ' more request' + (hiddenCount > 1 ? 's' : '') + " don't match your services or capacity" : (totalNew ? 'All open requests match your settings' : ''));
+    ? (newCards.length ? newCards.length + ' request' + (newCards.length > 1 ? 's' : '') + ' sat on Pro boards longer than 2 hours' : '')
+    : '';
 
-  $('proName').textContent = concierge ? CONCIERGE_NAME : PROS[me];
+  $('proName').textContent = nameOf(me);
   $('roleTag').textContent = concierge ? 'Internal ops view (Yourgi Concierge)' : 'Pro-facing queue (in the Pro app / portal)';
   $('roleSub').textContent = concierge
-    ? 'Every request across every Pro, unfiltered and unmasked - the master queue.'
-    : 'Flat-rate requests from the concierge form. Claim what fits your schedule.';
+    ? 'Requests no Pro accepted within 2 hours on their board. Find them a new match.'
+    : 'Requests the pet parent sent you, plus ones Yourgi matched to you after another Pro passed.';
 
   $('svcSettings').style.display = concierge ? 'none' : '';
+  $('scoreboardBar').style.display = concierge ? 'none' : '';
   $('conciergeSettingsSummary').style.display = concierge ? '' : 'none';
   if (concierge) $('conciergeSettingsSummary').innerHTML = svcSettingsSummary();
-  else renderSettingsPanel();
+  else { renderSettingsPanel(); renderScoreboard(); }
+}
+
+/* Race record strip: the standing scoreboard a Pro sees every time
+   they open the board. Moves when they win or lose a race. */
+function renderScoreboard() {
+  var s = PRO_STATS[me];
+  var ranked = Object.keys(PROS).sort(function(a,b){ return winRate(b) - winRate(a); });
+  var place = ranked.indexOf(me) + 1;
+  $('scoreboard').innerHTML =
+    '<span class="stat"><b>' + s.won + ' of ' + s.entered + '</b> races won this month</span>' +
+    '<span class="stat"><b>' + winRate(me) + '%</b> win rate</span>' +
+    '<span class="stat">#' + place + ' of ' + ranked.length + ' Pros in your market</span>' +
+    (s.streak ? '<span class="streak">' + s.streak + ' in a row</span>' : '<span class="stat">No active streak</span>');
 }
 
 /* Read-only: Services & Pricing is a settings page elsewhere in the
@@ -391,9 +692,89 @@ function renderSettingsPanel() {
     ' &nbsp;&middot;&nbsp; <b>Status:</b> ' + (s.acceptingNew ? 'Accepting new requests' : 'Paused');
 }
 
-window.claim = function(id){ var c = cards.find(function(x){ return x.id === id; }); c.status = 'rev'; c.owner = me; render(); };
-window.release = function(id){ var c = cards.find(function(x){ return x.id === id; }); c.status = 'new'; c.owner = null; render(); };
-window.accept = function(id){ var c = cards.find(function(x){ return x.id === id; }); c.status = 'acc'; c.owner = c.owner || me; render(); };
+/* Claiming locks the request to one Pro. It stays on the other matched
+   Pros' boards showing as taken, so the race is visible. */
+window.claim = function(id){
+  var c = byId(id);
+  c.status = 'rev';
+  c.owner = me;
+  render();
+};
+
+/* A Pro passing on a request that's on their board - declining a fresh
+   one or backing out of Reviewing. It leaves THEIR board only. If other
+   matched Pros still hold it, it stays live for them. When the last
+   holder passes, a direct request re-runs the Match tool and a matched
+   one goes to Concierge. */
+window.decline = function(id){
+  var c = byId(id), now = Date.now();
+  c.history = c.history || [];
+  c.history.push({ pro: me, reviewed: c.status === 'rev', outcome: 'declined' });
+  c.assignedTo = (c.assignedTo || []).filter(function(k){ return k !== me; });
+  if (c.owner === me) c.owner = null;
+  if (!c.assignedTo.length) {
+    if (c.stage === 'direct') { fanOut(c, now); toast('Passed to Yourgi Match'); }
+    else { toRematch(c, now); toast('Sent to Concierge to rematch'); }
+  } else {
+    c.status = 'new';
+    toast('Removed from your board');
+  }
+  render();
+};
+
+window.accept = function(id){
+  var c = byId(id);
+  c.status = 'acc';
+  c.owner = c.owner || me;
+  c.expiresAt = null;
+  /* Race resolved: the accepter banks a win and extends their streak;
+     everyone else who had it on their board takes the loss. */
+  var winner = c.owner;
+  PRO_STATS[winner].won++; PRO_STATS[winner].entered++; PRO_STATS[winner].streak++;
+  (c.assignedTo || []).forEach(function(k){
+    if (k === winner) return;
+    PRO_STATS[k].entered++; PRO_STATS[k].streak = 0;
+  });
+  render();
+};
+
+/* A Concierge agent picks up a stalled request and starts working it.
+   It moves out of Needs Rematched into Reviewing, stamped with their
+   name so the rest of the team can see it's covered. */
+window.workThis = function(id){
+  var c = byId(id);
+  c.conciergeOwner = me;
+  c.conciergeStartedAt = Date.now();
+  render();
+  openDetail(id);
+};
+/* Put it back in the unclaimed pile for another agent. */
+window.handBack = function(id){
+  var c = byId(id);
+  c.conciergeOwner = null;
+  c.conciergeStartedAt = null;
+  if (openId === id) closeDetail();
+  render();
+  toast('Handed back to Needs Rematched');
+};
+
+/* Concierge manually rematches a stalled request to a chosen Pro after
+   coordinating with them. It goes onto that Pro's board with a fresh
+   2-hour window; history is preserved so the trail keeps building. */
+window.rematch = function(id, proKey){
+  var c = byId(id);
+  c.stage = 'matched';
+  c.status = 'new';
+  c.assignedTo = [proKey];
+  c.owner = null;
+  c.escalatedAt = null;
+  c.conciergeOwner = null;
+  c.conciergeStartedAt = null;
+  c.expiresAt = Date.now() + FANOUT_WINDOW_MIN*60000;
+  closeDetail();
+  render();
+  toast('Assigned to ' + PROS[proKey] + ' - on their board with a fresh 2-hour window');
+};
 
 /* ===== Request detail modal: what a Pro sees when they open a request ===== */
 var openId = null, lastFocus = null;
@@ -404,6 +785,8 @@ window.openDetail = function(id){
   var c = byId(id); if (!c) return;
   var concierge = isConcierge();
   openId = id; lastFocus = document.activeElement;
+  /* Opening a request is visible to the Pros you're racing. */
+  if (!concierge && has(c, me)) { c.views = c.views || {}; c.views[me] = Date.now(); }
   var accepted = c.status === 'acc';
   var named = c.parent && !/^new pet parent$/i.test(c.parent);
   var firstName = named ? c.parent.split(' ')[0] : '';
@@ -425,39 +808,106 @@ window.openDetail = function(id){
 
   var contactUnlocked = accepted || concierge;
   $('mAddress').textContent = contactUnlocked ? (c.street ? c.street + ', ' + c.area : c.market) : (c.area || c.market) + ' (approximate until accepted)';
+  /* Disintermediation control: a Pro can't contact the pet parent while
+     the request is merely sitting on their board. Messaging unlocks only
+     once they've committed by moving it to Reviewing. Concierge (Yourgi
+     staff) is exempt - contacting parents is their job. */
+  var canMessage = concierge || (has(c, me) && (c.status === 'rev' || c.status === 'acc'));
+  $('mMsgLink').style.display = canMessage ? '' : 'none';
+  $('mMsgLocked').style.display = canMessage ? 'none' : '';
   $('mContactNote').textContent = concierge
     ? 'Concierge view: contact is always visible to ops, same as the Teams card today.'
     : accepted
       ? 'Contact unlocked. You can message or call the parent directly.'
-      : 'Contact stays masked until you accept. Messaging goes through the platform.';
+      : (c.status === 'rev' && c.owner === me)
+        ? 'Messaging unlocked. Talk to the parent here - keep it on the platform. Phone and email unlock when you accept.'
+        : 'Messaging unlocks when you claim this into Reviewing. Contact details unlock when you accept.';
 
-  if (concierge && c.status === 'new') {
-    /* Master-queue view of an unclaimed request: show which Pros can
-       currently see it and why others can't, instead of a payout figure
-       that doesn't exist yet (no Pro has claimed it). */
-    var rows = Object.keys(PROS).map(function(k){
-      var v = proVisibility(c, k);
-      return '<div class="row" style="margin-bottom:6px"><span class="dot" style="background:' + (v.ok ? '#dff0d8' : '#f4f4f4') + '"></span>' +
-        '<span>' + PROS[k] + (v.ok ? ' &mdash; sees it' : ' &mdash; hidden') + '<br><span class="muted" style="font-size:11px">' + v.reason + '</span></span></div>';
-    }).join('');
-    $('mPayoutBody').innerHTML = '<h3>Pro Visibility</h3>' + rows;
+  if (concierge) {
+    /* Concierge never needs a Pro's payout - they need to know who was
+       asked first, who has it right now, and who already passed, so
+       they can pick someone who hasn't. */
+    var g = function(label, lines){
+      if (!lines.length) return '';
+      return '<div class="lab">' + label + '</div>' +
+        lines.map(function(l){ return '<div class="row" style="margin-bottom:5px"><span class="dot"></span><span style="font-size:12.5px">' + l + '</span></div>'; }).join('');
+    };
+    var onBoards = (c.assignedTo || []).map(function(k){
+      return PROS[k] + (c.owner === k ? ' - reviewing it now' : ' - not opened yet');
+    });
+    var passed = (c.history || []).map(outcomeLine);
+    $('mPayoutBody').innerHTML = '<h3>Routing</h3>' +
+      g('Originally requested', [PROS[c.originalPro]]) +
+      g('On their kanban now', onBoards.length ? onBoards : ['Nobody - waiting on you']) +
+      g('Already passed', passed.length ? passed : ['Nobody yet']);
   } else {
     var payout = Math.round(money(c.quote) * 0.8);
-    var payoutLabel = concierge ? (c.owner ? PROS[c.owner] + "'s Payout" : 'Payout') : 'Your Payout';
+    var rivals = (c.assignedTo || []).filter(function(k){ return k !== me; });
+    var myRank = c.rank && c.rank[me];
+    var raceNote = '';
+    if (c.status === 'new' && rivals.length) {
+      raceNote = '<div class="m-note"><b>' + (myRank === 1 ? "You're Yourgi's #1 match" : 'You rank #' + myRank) +
+        '</b> &middot; racing ' + rivals.length + ' other Pro' + (rivals.length === 1 ? '' : 's') + '. First to accept gets it.' +
+        (rivalActivity(c).length ? '<br>' + rivalActivity(c).join('<br>') : '') + '</div>';
+    }
     $('mPayoutBody').innerHTML =
-      '<h3>' + payoutLabel + '</h3>' +
+      '<h3>Your Payout</h3>' +
       '<div class="payout">$' + payout.toLocaleString() + '</div>' +
       '<div class="sub">' + (accepted ? 'Confirmed' : 'Pending confirmation') + '</div>' +
+      raceNote +
       '<div class="m-note">Placeholder figure. The parent pays ' + c.quote + '; Yourgi absorbs the difference under the flat-rate model.</div>';
   }
 
   var claimedByOther = c.owner && c.owner !== me;
-  var hideActions = accepted || claimedByOther || concierge;
-  $('mAccept').style.display = hideActions ? 'none' : '';
-  $('mDecline').style.display = hideActions ? 'none' : '';
-  if (accepted) { $('mWho').textContent = 'Booked' + (c.owner === me ? ' by you' : concierge ? ' by ' + PROS[c.owner] : ' by ' + PROS[c.owner]); }
+  var onMyBoard = has(c, me);
+  var canAct = !concierge && !accepted && !claimedByOther && onMyBoard;
+  $('mAccept').style.display = canAct ? '' : 'none';
+  $('mDecline').style.display = canAct ? '' : 'none';
+
+  /* Assignment lives in the Match Widget, after a real phone call -
+     no blind re-sending from the banner. */
+  $('mReassign').style.display = 'none';
+  $('mReassign').innerHTML = '';
+
+  if (concierge && c.status === 'rematch') {
+    var rows = matchWidgetRows(c);
+    var mineToWork = c.conciergeOwner === me;
+    var heldByOther = c.conciergeOwner && !mineToWork;
+    $('mMatchWidget').style.display = '';
+    if (heldByOther) {
+      /* Another agent is already calling these Pros - read-only so two
+         concierges don't work the same list. */
+      $('mMatchRows').innerHTML =
+        '<div class="muted" style="font-size:12.5px;padding:2px 0 8px">' + CONCIERGES[c.conciergeOwner] + ' is working this request.</div>' +
+        rows.map(function(k){
+          return '<div class="match-row" style="opacity:.55"><span class="nm">' + PROS[k] + '</span><span class="ph">' + PRO_PHONES[k] + '</span></div>';
+        }).join('');
+    } else if (rows.length) {
+      $('mMatchRows').innerHTML = rows.map(function(k){
+        return '<div class="match-row"><span class="nm">' + PROS[k] + '</span>' +
+          '<span class="ph">' + PRO_PHONES[k] + '</span>' +
+          (mineToWork
+            ? '<button onclick="rematch(\'' + c.id + '\',\'' + k + '\')">Assign</button>'
+            : '<button onclick="workThis(\'' + c.id + '\')">Take it</button>') + '</div>';
+      }).join('');
+    } else {
+      $('mMatchRows').innerHTML = '<div class="muted" style="font-size:12.5px;padding:6px 0">No available Pro in this market offers ' + c.svc + '. Escalate to Supply.</div>';
+    }
+  } else {
+    $('mMatchWidget').style.display = 'none';
+  }
+
+  if (accepted) { $('mWho').textContent = 'Booked' + (c.owner === me ? ' by you' : ' by ' + PROS[c.owner]); }
+  else if (c.status === 'rematch') {
+    $('mWho').textContent = c.conciergeOwner
+      ? (c.conciergeOwner === me ? "You're working this - call the list and assign whoever says yes"
+                                 : CONCIERGES[c.conciergeOwner] + ' is working this')
+      : 'Stalled over 2 hours - needs a new match';
+  }
   else if (c.status === 'rev' && concierge) { $('mWho').textContent = 'Claimed by ' + PROS[c.owner] + ' - full visibility (Concierge)'; }
   else if (claimedByOther) { $('mWho').textContent = 'Claimed by another Pro - locked to them'; }
+  else if (concierge) { var n = (c.assignedTo || []).length; $('mWho').textContent = 'Live on ' + n + (n === 1 ? " Pro's board" : " Pros' boards"); }
+  else if (c.stage === 'matched') { $('mWho').textContent = 'Yourgi matched this to you' + (named ? ' - ' + firstName + ' needs a Pro' : ''); }
 
   $('overlay').classList.add('show');
   $('mTitle').focus();
@@ -466,8 +916,13 @@ function closeDetail(){ $('overlay').classList.remove('show'); openId = null; if
 $('mClose').onclick = closeDetail;
 $('overlay').addEventListener('click', function(e){ if (e.target === $('overlay')) closeDetail(); });
 document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && openId) closeDetail(); });
-$('mAccept').onclick = function(){ var id = openId; accept(id); closeDetail(); toast('Accepted - added to your bookings'); };
-$('mDecline').onclick = function(){ var id = openId; release(id); closeDetail(); toast('Sent back to New Requests for another Pro'); };
+$('mAccept').onclick = function(){
+  var id = openId, c = byId(id);
+  var beat = (c.assignedTo || []).filter(function(k){ return k !== me; }).length;
+  accept(id); closeDetail();
+  toast(beat ? 'You won the race - beat ' + beat + ' other Pro' + (beat === 1 ? '' : 's') + ' to it' : 'Accepted - added to your bookings');
+};
+$('mDecline').onclick = function(){ var id = openId; closeDetail(); decline(id); };
 
 /* ===== Live wiring: same-origin request form feeds this board =====
    The form (index.html on this origin) writes submitted requests to
@@ -489,15 +944,16 @@ function liveCards() {
     var dates = r.dates ? (r.dates.start + (r.dates.end ? ' - ' + r.dates.end : '')) : '';
     var units = (r.quote && r.quote.units) || 1;
     var unit = (r.quote && r.quote.unit) || 'day';
+    var routedTo = pickOriginalPro(r.service);
     return { id: r.requestId, svc: r.service, dates: dates, pets: (r.pets && r.pets.count) || 1,
       market: (r.likelyMarket || '') + ' ' + (r.zip || ''), quote: '$' + ((r.quote && r.quote.total) || '?'),
-      age: ageOf(r.submittedAt), status: 'new', owner: null, live: true,
+      age: ageOf(r.submittedAt), stage: 'direct', status: 'new', assignedTo: [routedTo], owner: null, originalPro: routedTo, history: [], live: true,
       phone: r.contact && r.contact.phone,
       parent: 'New pet parent', petNames: (r.pets && r.pets.countLabel || '1') + ' pet (profile created at booking)',
       start: (r.dates && r.dates.start) || '', duration: units + ' ' + unit + (units > 1 ? 's' : ''),
       area: (r.likelyMarket || 'Market TBD') + ' ' + (r.zip || ''), street: '',
       submitted: 'just now via the request form', notes: r.notes || '',
-      expiresAt: new Date(r.submittedAt).getTime() + 60*60000 };
+      expiresAt: new Date(r.submittedAt).getTime() + DIRECT_WINDOW_MIN*60000 };
   });
 }
 function mergeLive() {
@@ -514,7 +970,7 @@ window.addEventListener('storage', function (e) {
   render();
   if (cards.length > before) {
     var c = cards[0];
-    toast('Push sent to matching Pros: new ' + c.svc.toLowerCase() + ' request, ' + c.quote + ' (' + c.market.trim() + ')');
+    toast('Push sent to ' + PROS[c.assignedTo[0]] + ': new ' + c.svc.toLowerCase() + ' request, ' + c.quote + ' (' + c.market.trim() + ')');
   }
 });
 $('resetLive').onclick = function () {
@@ -542,11 +998,26 @@ $('switchUser').onclick = function(){
 $('sim').onclick = function(){
   seq++;
   var svc = SVCS[seq % 4];
+  var routedTo = pickOriginalPro(svc);
   cards.unshift({ id:'YRQ-88' + (50 + seq), svc:svc, dates:'Aug ' + (10 + seq % 15), pets:1 + seq % 3,
-    market:'Denver 802' + (10 + seq % 20), quote:'$' + (40 + (seq * 37) % 400), age:'just now', status:'new', owner:null,
-    parent:'A new pet parent', expiresAt: Date.now() + 60*60000 });
+    market:'Denver 802' + (10 + seq % 20), quote:'$' + (40 + (seq * 37) % 400), age:'just now',
+    stage:'direct', status:'new', assignedTo:[routedTo], owner:null, originalPro:routedTo, history:[],
+    parent:'A new pet parent', expiresAt: Date.now() + DIRECT_WINDOW_MIN*60000 });
   render();
-  toast('Push sent to ' + (3 + seq % 4) + ' matching Pros: new ' + svc.toLowerCase() + ' request in Denver');
+  toast('Push sent to ' + PROS[routedTo] + ': new ' + svc.toLowerCase() + ' request in Denver');
+};
+
+/* Demo aid only: rewinds every countdown an hour so the whole routing
+   lifecycle (direct -> Match tool fan-out -> Concierge) is watchable in
+   a meeting instead of over an afternoon. */
+$('advance').onclick = function(){
+  var shift = 60*60000;
+  cards.forEach(function(c){
+    if (c.expiresAt) c.expiresAt -= shift;
+    if (c.escalatedAt) c.escalatedAt -= shift;
+  });
+  render();
+  toast('Advanced 1 hour');
 };
 
 /* Notification concept: matched Pros get a push when a request lands */

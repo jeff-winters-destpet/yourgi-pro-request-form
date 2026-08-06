@@ -106,16 +106,8 @@ button { font:inherit; cursor:pointer; }
 </div>
 
 <div class="topbar" id="svcSettings">
-  <span class="tag">Services &amp; Pricing (your settings &mdash; filters what you see in New Requests)</span>
-  <div style="display:flex; gap:18px; flex-wrap:wrap; align-items:center; width:100%">
-    <div style="display:flex; gap:12px; flex-wrap:wrap" id="svcChecks"></div>
-    <label style="font-size:12px; display:flex; align-items:center; gap:6px">Weekly capacity
-      <input type="number" id="capInput" min="0" max="20" style="width:52px; border:1.5px solid var(--line); border-radius:4px; padding:3px 6px">
-    </label>
-    <label style="font-size:12px; display:flex; align-items:center; gap:6px">
-      <input type="checkbox" id="acceptingChk"> Accepting new requests
-    </label>
-  </div>
+  <span class="tag">Your Services &amp; Pricing settings (read-only here &mdash; set on the Services &amp; Pricing page)</span>
+  <div class="muted" id="svcSummary" style="font-size:12.5px; width:100%"></div>
 </div>
 
 <div class="layout">
@@ -222,7 +214,7 @@ button { font:inherit; cursor:pointer; }
     <li><b>Address gating (open question):</b> the detail view shows the neighborhood before accept and the full street address after. Dog walking arguably needs the address earlier; boarding does not. Decide per service.</li>
     <li><b>Escalation:</b> cards aging past a threshold with no claim get flagged to the concierge team (today's Teams channel keeps working as the fallback + audit log).</li>
     <li><b>Master queue (Concierge role):</b> Yourgi Concierge sees every request across every Pro, unfiltered and unmasked (matches what the Teams channel already shows concierge today). Concierge doesn't claim or accept; they oversee, and can force-release a stuck Reviewing card back to New.</li>
-    <li><b>Per-Pro filtering (Services &amp; Pricing):</b> each Pro's New Requests only shows what matches the services they've turned on, and disappears once they're at their weekly capacity or have paused new requests. Two Pros looking at the same instant see different queues by design. Try toggling Alex's services below to see requests appear/disappear live.</li>
+    <li><b>Per-Pro filtering (Services &amp; Pricing):</b> each Pro's New Requests only shows what matches the services they've turned on, and disappears once they're at their weekly capacity or have paused new requests. Two Pros looking at the same instant see different queues by design. Settings are read-only here - a Pro changes them on the actual Services &amp; Pricing page, not from the queue. Switch between Colette and Alex above to see the difference (Alex doesn't offer Boarding or House Sitting).</li>
   </ul>
 </div>
 
@@ -345,23 +337,20 @@ function render() {
   $('svcSettings').style.display = concierge ? 'none' : '';
   $('conciergeSettingsSummary').style.display = concierge ? '' : 'none';
   if (concierge) $('conciergeSettingsSummary').innerHTML = svcSettingsSummary();
-  if (!concierge) renderSettingsPanel();
+  else renderSettingsPanel();
 }
 
+/* Read-only: Services & Pricing is a settings page elsewhere in the
+   real app, not something a Pro edits from the queue. This is a plain
+   summary of the fixed PRO_SETTINGS for whoever's viewing. */
 function renderSettingsPanel() {
   var s = PRO_SETTINGS[me];
-  $('svcChecks').innerHTML = SVCS.map(function(sv, i){
-    var checked = s.services[sv] ? ' checked' : '';
-    return '<label style="font-size:12.5px; display:flex; align-items:center; gap:5px">' +
-      '<input type="checkbox" data-svc="' + sv + '"' + checked + '> ' + sv + '</label>';
-  }).join('');
-  document.querySelectorAll('#svcChecks input').forEach(function(cb){
-    cb.onchange = function(){ PRO_SETTINGS[me].services[cb.dataset.svc] = cb.checked; render(); };
-  });
-  $('capInput').value = s.capacity;
-  $('capInput').onchange = function(){ PRO_SETTINGS[me].capacity = Math.max(0, parseInt($('capInput').value, 10) || 0); render(); };
-  $('acceptingChk').checked = s.acceptingNew;
-  $('acceptingChk').onchange = function(){ PRO_SETTINGS[me].acceptingNew = $('acceptingChk').checked; render(); };
+  var offered = SVCS.filter(function(sv){ return s.services[sv]; });
+  var active = activeCountFor(me);
+  $('svcSummary').innerHTML =
+    '<b>Services:</b> ' + (offered.length ? offered.join(', ') : 'none turned on') +
+    ' &nbsp;&middot;&nbsp; <b>Weekly capacity:</b> ' + active + '/' + s.capacity +
+    ' &nbsp;&middot;&nbsp; <b>Status:</b> ' + (s.acceptingNew ? 'Accepting new requests' : 'Paused');
 }
 
 window.claim = function(id){ var c = cards.find(function(x){ return x.id === id; }); c.status = 'rev'; c.owner = me; render(); };

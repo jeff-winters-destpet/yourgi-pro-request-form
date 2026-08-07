@@ -83,6 +83,9 @@ button { font:inherit; cursor:pointer; }
 @media(min-width:760px){ .m-grid { grid-template-columns:1fr 1fr 1fr; align-items:start; } }
 .m-card { border:1.5px solid var(--line); border-radius:6px; padding:12px; margin-bottom:12px; }
 .m-card h3 { font-size:13.5px; margin-bottom:8px; }
+/* Customer tier flag - deliberately binary: new or high volume, nothing between. */
+.m-card .tier { float:right; font-weight:400; font-size:10.5px; color:#777; border:1px solid var(--line); border-radius:999px; padding:1px 9px; }
+.m-card .tier.high { border-color:var(--ink); color:var(--ink); font-weight:700; }
 .m-card .row { display:flex; align-items:center; gap:9px; font-size:12.5px; }
 .m-card .row .dot { width:26px; height:26px; border-radius:50%; border:1.5px solid var(--line); background:var(--soft); flex:0 0 auto; }
 .m-card .row .chev { margin-left:auto; color:#bbb; }
@@ -228,7 +231,7 @@ button { font:inherit; cursor:pointer; }
     <div class="m-grid">
       <div>
         <div class="m-card">
-          <h3>Customer Profile</h3>
+          <h3>Customer Profile <span class="tier" id="mTier"></span></h3>
           <div class="row"><span class="dot"></span><span id="mCust">Pet parent</span><span class="chev">&rsaquo;</span></div>
           <a class="link" id="mMsgLink" href="#" onclick="return false">Message Customer</a>
           <span class="link" id="mMsgLocked" style="display:none; text-decoration:none; color:#aaa">Message Customer &middot; locked</span>
@@ -416,7 +419,7 @@ var cards = [
   /* DIRECT: the parent asked for Colette. Still hers alone, clock running. */
   { id:'YRQ-8842', svc:'Boarding', dates:'Aug 10 - Aug 13', pets:2, market:'Denver 80227', quote:'$315', age:'2h ago',
     stage:'direct', status:'new', originalPro:'A', assignedTo:['A'], owner:null, history:[],
-    parent:'Jilli M.', petNames:'Caro (Dog, 6) and Miso (Dog, 3)', start:'Mon, Aug 10, 2026 - 9:00 AM', duration:'3 nights', street:'100 Evergreen Rd', area:'Wash Park, Denver 80227', submitted:'Today 1:34 PM',
+    parent:'Jilli M.', tier:'high', petNames:'Caro (Dog, 6) and Miso (Dog, 3)', start:'Mon, Aug 10, 2026 - 9:00 AM', duration:'3 nights', street:'100 Evergreen Rd', area:'Wash Park, Denver 80227', submitted:'Today 1:34 PM',
     expiresAt: NOW + 38*60000 },
 
   /* MATCHED: Devon asked for Alex, Alex declined. The Match tool fanned
@@ -426,7 +429,7 @@ var cards = [
     stage:'matched', status:'new', originalPro:'B', assignedTo:['A','C'], owner:null,
     rank:{ A:1, C:2 }, views:{ C: NOW - 4*60000 },
     history:[ { pro:'B', reviewed:false, outcome:'declined' } ],
-    parent:'Devon R.', petNames:'Pickle (Dog, 2)', start:'Wed, Aug 5, 2026 - 8:00 AM', duration:'Full day', street:'4212 Zuni St', area:'Sunnyside, Denver 80211', submitted:'Today 10:02 AM',
+    parent:'Devon R.', tier:'new', petNames:'Pickle (Dog, 2)', start:'Wed, Aug 5, 2026 - 8:00 AM', duration:'Full day', street:'4212 Zuni St', area:'Sunnyside, Denver 80211', submitted:'Today 10:02 AM',
     expiresAt: NOW + 74*60000 },
 
   /* NEEDS REMATCHED: fanned out to Colette and Priya, sat past the
@@ -437,7 +440,7 @@ var cards = [
               { pro:'A', reviewed:true,  outcome:'expired' },
               { pro:'C', reviewed:false, outcome:'expired' } ],
     escalatedAt: NOW - 55*60000,
-    parent:'Marcus T.', petNames:'Bruno (Dog, 3)', start:'Wed, Aug 12, 2026 - 12:00 PM', duration:'2 nights', street:'450 Pearl St', area:'Denver 80203', submitted:'Yesterday 9:15 AM' },
+    parent:'Marcus T.', tier:'high', petNames:'Bruno (Dog, 3)', start:'Wed, Aug 12, 2026 - 12:00 PM', duration:'2 nights', street:'450 Pearl St', area:'Denver 80203', submitted:'Yesterday 9:15 AM' },
 
   /* NEEDS REMATCHED: nobody left who offers House Sitting and has room -
      an intentional dead-end so the "no untried Pro" path is visible. */
@@ -445,7 +448,7 @@ var cards = [
     stage:'matched', status:'rematch', originalPro:'A', assignedTo:[], owner:null,
     history:[ { pro:'A', reviewed:false, outcome:'declined' }, { pro:'C', reviewed:true, outcome:'declined' } ],
     escalatedAt: NOW - 20*60000,
-    parent:'Andrea O.', petNames:'Biscuit (Dog, 8), Mo (Cat, 4), Juno (Cat, 1)', start:'Sat, Aug 15, 2026 - 4:00 PM', duration:'3 nights', street:'880 S Kipling St', area:'Lakewood 80227', submitted:'Today 7:41 AM' },
+    parent:'Andrea O.', tier:'new', petNames:'Biscuit (Dog, 8), Mo (Cat, 4), Juno (Cat, 1)', start:'Sat, Aug 15, 2026 - 4:00 PM', duration:'3 nights', street:'880 S Kipling St', area:'Lakewood 80227', submitted:'Today 7:41 AM' },
 
   /* Claimed out of a fan-out: Alex is reviewing, Colette still has it
      on her board showing as locked. */
@@ -453,11 +456,11 @@ var cards = [
     stage:'matched', status:'rev', originalPro:'A', assignedTo:['A','B'], owner:'B',
     rank:{ A:1, B:2 }, views:{ A: NOW - 26*60000, B: NOW - 31*60000 },
     history:[], expiresAt: NOW + 90*60000,
-    parent:'Sam T.', petNames:'Waffle (Dog, 5)', start:'Thu, Aug 6, 2026 - 7:30 AM', duration:'30 minutes', street:'1801 Blake St', area:'LoDo, Denver 80202', submitted:'Yesterday 3:20 PM' },
+    parent:'Sam T.', tier:'new', petNames:'Waffle (Dog, 5)', start:'Thu, Aug 6, 2026 - 7:30 AM', duration:'30 minutes', street:'1801 Blake St', area:'LoDo, Denver 80202', submitted:'Yesterday 3:20 PM' },
 
   { id:'YRQ-8801', svc:'Boarding', dates:'Aug 2 - Aug 4', pets:1, market:'Denver 80209', quote:'$105', age:'2d ago',
     stage:'direct', status:'acc', originalPro:'A', assignedTo:['A'], owner:'A', history:[],
-    parent:'Catherine G.', petNames:'Nugget (Dog, 4)', start:'Sun, Aug 2, 2026 - 10:00 AM', duration:'2 nights', street:'305 S Downing St', area:'Wash Park, Denver 80209', submitted:'2 days ago' }
+    parent:'Catherine G.', tier:'high', petNames:'Nugget (Dog, 4)', start:'Sun, Aug 2, 2026 - 10:00 AM', duration:'2 nights', street:'305 S Downing St', area:'Wash Park, Denver 80209', submitted:'2 days ago' }
 ];
 var $ = function(id){ return document.getElementById(id); };
 function isConcierge(){ return !!CONCIERGES[me]; }
@@ -798,6 +801,11 @@ window.openDetail = function(id){
   $('mSubmitted').textContent = 'Submitted ' + (c.submitted || c.age);
   $('mWhen').textContent = 'Request ' + c.id;
   $('mCust').textContent = c.parent || 'Pet parent';
+  /* Binary customer flag - new or high volume, no band in between. */
+  var tierEl = $('mTier');
+  if (c.tier === 'high') { tierEl.textContent = 'High volume customer'; tierEl.className = 'tier high'; }
+  else if (c.tier === 'new') { tierEl.textContent = 'New customer'; tierEl.className = 'tier'; }
+  else { tierEl.textContent = ''; tierEl.className = 'tier'; }
   $('mPets').textContent = petLabel;
   $('mService').textContent = c.svc;
   $('mStart').textContent = c.start || c.dates;
@@ -945,7 +953,7 @@ $('sim').onclick = function(){
   cards.unshift({ id:'YRQ-88' + (50 + seq), svc:svc, dates:'Aug ' + (10 + seq % 15), pets:1 + seq % 3,
     market:'Denver 802' + (10 + seq % 20), quote:'$' + (40 + (seq * 37) % 400), age:'just now',
     stage:'direct', status:'new', assignedTo:[routedTo], owner:null, originalPro:routedTo, history:[],
-    parent:'A new pet parent', expiresAt: Date.now() + DIRECT_WINDOW_MIN*60000 });
+    parent:'A new pet parent', tier:'new', expiresAt: Date.now() + DIRECT_WINDOW_MIN*60000 });
   render();
   toast('Push sent to ' + PROS[routedTo] + ': new ' + svc.toLowerCase() + ' booking in Denver');
 };

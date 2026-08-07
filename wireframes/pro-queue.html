@@ -183,7 +183,7 @@ button { font:inherit; cursor:pointer; }
 </div>
 
 <div class="topbar" id="scoreboardBar">
-  <span class="tag">Your race record</span>
+  <span class="tag">Your activity</span>
   <div class="scoreboard" id="scoreboard"></div>
 </div>
 
@@ -324,10 +324,10 @@ function activeCountFor(proKey) {
   return cards.filter(function(c){ return c.owner === proKey && (c.status === 'rev' || c.status === 'acc'); }).length;
 }
 
-/* ===== Race record (gamification) =====
-   Seeded with plausible history; moves live as Pros win and lose races
-   during the demo. "Entered" counts every request that landed on your
-   board and got resolved by someone. */
+/* ===== Pro activity stats =====
+   Seeded with plausible history; moves live as bookings are accepted
+   during the demo. "entered" counts every booking that landed on your
+   board and was resolved by someone; "won" counts the ones you took. */
 var PRO_STATS = {
   A: { won: 6, entered: 9,  streak: 3 },
   B: { won: 4, entered: 11, streak: 0 },
@@ -386,18 +386,22 @@ function fanOut(c, now) {
   c.views = c.views || {};
   c.expiresAt = now + FANOUT_WINDOW_MIN * 60000;
 }
-/* "Alex viewed this 4 minutes ago" - real rival activity, recorded when
-   a Pro opens the detail modal. */
 function agoText(ts) {
   var mins = Math.max(0, Math.round((Date.now() - ts) / 60000));
   if (mins < 1) return 'just now';
   if (mins < 60) return mins + ' min ago';
   return Math.round(mins / 60) + 'h ago';
 }
-function rivalActivity(c) {
-  return Object.keys(c.views || {})
-    .filter(function(k){ return k !== me && has(c, k); })
-    .map(function(k){ return PROS[k] + ' opened this ' + agoText(c.views[k]); });
+/* Activity from the other Pros holding this booking, recorded when they
+   open the detail view. Deliberately anonymous: a Pro never sees which
+   other Pro it was, only that someone else has looked. */
+function othersLookingNote(c) {
+  var others = Object.keys(c.views || {}).filter(function(k){ return k !== me && has(c, k); });
+  if (!others.length) return '';
+  var latest = Math.max.apply(null, others.map(function(k){ return c.views[k]; }));
+  return others.length === 1
+    ? 'One of them opened it ' + agoText(latest)
+    : others.length + ' of them have opened it, most recently ' + agoText(latest);
 }
 /* Park a request in Concierge's Needs Rematched column. */
 function toRematch(c, now) {
@@ -527,17 +531,17 @@ function cardHtml(c) {
     }
   } else if (c.status === 'new' && !concierge) {
     h += '<div class="lockline">' + routeSummary(c) + '</div>';
-    /* The race: who else is holding this, where you rank, and what
-       your rivals have already done about it. */
+    /* Who else is holding this booking, and where Yourgi ranked you.
+       Stated factually - no competition framing, no other Pro named. */
     var others = (c.assignedTo || []).filter(function(k){ return k !== me; }).length;
     if (c.stage === 'matched' && others) {
       var myRank = c.rank && c.rank[me];
       var leading = myRank === 1;
+      var seen = othersLookingNote(c);
       h += '<div class="race' + (leading ? ' leading' : '') + '">' +
-        '<b>RACING ' + others + ' OTHER PRO' + (others === 1 ? '' : 'S') + '</b>' +
-        (myRank ? '<span class="rank">' + (leading ? "YOU'RE THE #1 MATCH" : '#' + myRank + ' MATCH') + '</span>' : '') +
-        '<span class="rival">First to accept gets the booking' +
-        (rivalActivity(c).length ? ' &middot; ' + rivalActivity(c).join(' &middot; ') : '') + '</span>' +
+        '<b>' + others + ' Pro' + (others === 1 ? ' is' : 's are') + ' also looking at this booking</b>' +
+        (myRank ? '<span class="rank">' + (leading ? '#1 match' : '#' + myRank + ' match') + '</span>' : '') +
+        '<span class="rival">Yours as soon as you accept' + (seen ? ' &middot; ' + seen : '') + '</span>' +
         '</div>';
     }
   } else if ((c.status === 'new' || c.status === 'rev') && concierge) {
@@ -546,16 +550,15 @@ function cardHtml(c) {
   }
 
   if (c.status === 'rev') {
-    var revLine = mine ? '<span class="won">You got there first</span> &middot; accept before the window closes'
+    var revLine = mine ? '<span class="won">Claimed by you</span> &middot; accept before the window closes'
       : concierge ? 'Claimed by ' + PROS[c.owner] + ' &middot; <span class="owner">locked to them</span>'
-      : '<span class="lost">Another Pro claimed it first</span> &middot; <span class="owner">locked</span>';
+      : '<span class="lost">Claimed by another Pro</span> &middot; <span class="owner">locked</span>';
     h += '<div class="lockline">' + revLine + '</div>';
   }
-  if (c.status === 'acc') {
-    h += '<div class="lockline">' + (mine
-      ? '<span class="won">You won this one</span>'
-      : concierge ? 'Booked by ' + PROS[c.owner]
-      : '<span class="lost">Another Pro won this one</span>') + '</div>';
+  if (c.status === 'acc' && !mine) {
+    h += '<div class="lockline">' + (concierge
+      ? 'Booked by ' + PROS[c.owner]
+      : '<span class="lost">Booked with another Pro</span>') + '</div>';
   }
 
   if (c.status === 'new' && !concierge) {
@@ -637,7 +640,12 @@ function render() {
     sortKey = function(c){ return c.expiresAt || Infinity; };
     revCards = cards.filter(function(c){ return c.status === 'rev' && relevant(c); });
   }
-  newCards.sort(function(a, b){ return sortKey(a) - sortKey(b); }); /* oldest first */
+  /* Oldest first. On a tie, the bigger booking outranks the smaller one -
+     same wait, more revenue at stake. */
+  newCards.sort(function(a, b){
+    var d = sortKey(a) - sortKey(b);
+    return d !== 0 ? d : money(b.quote) - money(a.quote);
+  });
 
   var accCards = cards.filter(function(c){ return c.status === 'acc' && relevant(c); });
 
@@ -664,17 +672,14 @@ function render() {
   else { renderSettingsPanel(); renderScoreboard(); }
 }
 
-/* Race record strip: the standing scoreboard a Pro sees every time
-   they open the board. Moves when they win or lose a race. */
+/* Activity strip: the Pro's own standing figures. Factual, not
+   competitive - no leaderboard position against other Pros. */
 function renderScoreboard() {
   var s = PRO_STATS[me];
-  var ranked = Object.keys(PROS).sort(function(a,b){ return winRate(b) - winRate(a); });
-  var place = ranked.indexOf(me) + 1;
   $('scoreboard').innerHTML =
-    '<span class="stat"><b>' + s.won + ' of ' + s.entered + '</b> races won this month</span>' +
-    '<span class="stat"><b>' + winRate(me) + '%</b> win rate</span>' +
-    '<span class="stat">#' + place + ' of ' + ranked.length + ' Pros in your market</span>' +
-    (s.streak ? '<span class="streak">' + s.streak + ' in a row</span>' : '<span class="stat">No active streak</span>');
+    '<span class="stat"><b>' + s.won + ' of ' + s.entered + '</b> bookings accepted this month</span>' +
+    '<span class="stat"><b>' + winRate(me) + '%</b> acceptance rate</span>' +
+    (s.streak ? '<span class="streak">' + s.streak + ' accepted in a row</span>' : '<span class="stat">Usually responds within the hour</span>');
 }
 
 /* Read-only: Services & Pricing is a settings page elsewhere in the
@@ -844,9 +849,10 @@ window.openDetail = function(id){
     var myRank = c.rank && c.rank[me];
     var raceNote = '';
     if (c.status === 'new' && rivals.length) {
-      raceNote = '<div class="m-note"><b>' + (myRank === 1 ? "You're Yourgi's #1 match" : 'You rank #' + myRank) +
-        '</b> &middot; racing ' + rivals.length + ' other Pro' + (rivals.length === 1 ? '' : 's') + '. First to accept gets it.' +
-        (rivalActivity(c).length ? '<br>' + rivalActivity(c).join('<br>') : '') + '</div>';
+      var seenNote = othersLookingNote(c);
+      raceNote = '<div class="m-note"><b>' + rivals.length + ' Pro' + (rivals.length === 1 ? ' is' : 's are') +
+        ' also looking at this booking</b>' + (myRank ? ' &middot; Yourgi ranked you #' + myRank + ' match' : '') +
+        '. Yours as soon as you accept.' + (seenNote ? '<br>' + seenNote + '.' : '') + '</div>';
     }
     $('mPayoutBody').innerHTML =
       '<h3>Your Payout</h3>' +
@@ -915,10 +921,9 @@ $('mClose').onclick = closeDetail;
 $('overlay').addEventListener('click', function(e){ if (e.target === $('overlay')) closeDetail(); });
 document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && openId) closeDetail(); });
 $('mAccept').onclick = function(){
-  var id = openId, c = byId(id);
-  var beat = (c.assignedTo || []).filter(function(k){ return k !== me; }).length;
+  var id = openId;
   accept(id); closeDetail();
-  toast(beat ? 'You won the race - beat ' + beat + ' other Pro' + (beat === 1 ? '' : 's') + ' to it' : 'Accepted - added to your bookings');
+  toast('Accepted - added to your bookings');
 };
 $('mDecline').onclick = function(){ var id = openId; closeDetail(); decline(id); };
 
